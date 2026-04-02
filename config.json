@@ -1,0 +1,10 @@
+{
+  "whitelistChannelId": "1484855996693086229",
+  "nameChangeChannelId": "1484856771691548682",
+  "revokeLogChannelId": "1485161429391769672",
+  "noVoucherChannelId": "1484856207926624266",
+  "citizenRoleId": "1470220879194750987",
+  "adminRoleIds": [
+    "1470220903211340041"
+  ]
+}
