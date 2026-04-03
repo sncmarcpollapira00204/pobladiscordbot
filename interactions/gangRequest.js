@@ -273,6 +273,49 @@ if (interaction.isModalSubmit() && interaction.customId === "unrole_modal") {
 
       return interaction.reply({ content: "❌ Request denied.", flags: 64 });
     }
+    
+    /* =========================
+        UNROLE APPROVE
+      ========================= */
+      if (interaction.customId === "unrole_approve") {
+
+        if (!interaction.member.permissions.has("Administrator")) {
+          return interaction.reply({ content: "❌ Admin only.", flags: 64 });
+        }
+
+        const userId = parts[1];
+        const member = await interaction.guild.members.fetch(userId).catch(() => null);
+
+        if (!member) {
+          return interaction.reply({ content: "❌ User not found.", flags: 64 });
+        }
+
+        // remove gang roles
+        for (const roleId of config.gangRoleIds) {
+          if (member.roles.cache.has(roleId)) {
+            await member.roles.remove(roleId).catch(() => {});
+          }
+        }
+
+        // remove prefix
+        let name = member.nickname || member.user.username;
+        name = name.includes("|") ? name.split("|")[1].trim() : name;
+
+        await member.setNickname(name).catch(() => {
+          console.log("⚠️ Cannot change nickname");
+        });
+
+        // cooldown
+        cooldown.set(userId, Date.now() + COOLDOWN_TIME);
+
+        const newEmbed = EmbedBuilder.from(embed)
+          .spliceFields(3, 1, { name: "STATUS", value: "✅ APPROVED" })
+          .addFields({ name: "APPROVED BY", value: `${interaction.user}` });
+
+        await interaction.message.edit({ embeds: [newEmbed], components: [] });
+
+        return interaction.reply({ content: "✅ Unrole approved.", flags: 64 });
+      }
 
   });
 };
