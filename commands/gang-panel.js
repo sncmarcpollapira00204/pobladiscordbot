@@ -58,14 +58,36 @@ module.exports = {
        DROPDOWN OPTIONS
     ========================= */
 
-    const options = Object.entries(gangs).map(([key, gang]) => ({
-      label: gang.name,
-      value: key
-    }));
+        const gangEmojis = {
+        DSF: "🟤",
+        RL: "🔵",
+        TRD: "⚫",
+        "7xM": "⚪",
+        NTS: "🟣",
+        FT: "🟡",
+        L2K: "🔴",
+        "417": "🟥",
+        SC: "🟡",
+        HSD: "🟣",
+        SIN: "🌸",
+        Y2K: "🟫",
+        PTR: "🟠",
+        TC: "🟡",
+        PG: "🔵",
+        LSS: "⚪",
+        OG: "🟠",
+        "88s": "🟤"
+        };
+
+        const options = Object.entries(gangs).map(([key, gang]) => ({
+        label: gang.name,
+        value: key,
+        emoji: gangEmojis[key] || "⚪"
+        }));
 
     const select = new StringSelectMenuBuilder()
       .setCustomId("gang_select")
-      .setPlaceholder("Select your gang...")
+      .setPlaceholder("Select your Gang Role here...")
       .addOptions(options);
 
     const dropdownRow = new ActionRowBuilder().addComponents(select);
@@ -76,7 +98,7 @@ module.exports = {
 
     const leaveButton = new ButtonBuilder()
       .setCustomId("gang_leave")
-      .setLabel("Leave Gang")
+      .setLabel("Unrole Request")
       .setStyle(ButtonStyle.Danger)
       .setEmoji("🚪");
 
@@ -92,7 +114,7 @@ module.exports = {
     });
 
     return interaction.reply({
-      content: "✅ Gang panel sent.",
+      content: "✅ Gang panel sent to the channel.",
       flags: 64
     });
   }

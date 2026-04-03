@@ -1,5 +1,5 @@
 module.exports = {
-  "DSF": { name: "DON SAFLEECA DE FAMILIA", roleId: "1470015537244278826", prefix: "DSDF" },
+  "DSF": { name: "DON SAFLEECA DE FAMILIA", roleId: "1470015537244278826", prefix: "DSF" },
   "RL": { name: "RUTHLESS", roleId: "1464851910547738809", prefix: "RL" },
   "TRD": { name: "TRIAD", roleId: "1464852021340405885", prefix: "TRD" },
   "7xM": { name: "737xMIKAELSON", roleId: "1464852040210714797", prefix: "7xM" },
