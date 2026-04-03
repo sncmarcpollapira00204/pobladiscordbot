@@ -2,7 +2,9 @@ const {
   SlashCommandBuilder,
   EmbedBuilder,
   ActionRowBuilder,
-  StringSelectMenuBuilder
+  StringSelectMenuBuilder,
+  ButtonBuilder,
+  ButtonStyle
 } = require("discord.js");
 
 const gangs = require("../gangRoles");
@@ -14,7 +16,7 @@ module.exports = {
 
   async execute(interaction) {
 
-    // 🔒 OPTIONAL ADMIN ONLY
+    // 🔒 ADMIN ONLY
     if (!interaction.member.permissions.has("Administrator")) {
       return interaction.reply({
         content: "❌ You do not have permission.",
@@ -35,6 +37,7 @@ module.exports = {
         "⚠️ **Rules:**\n" +
         "• Must be verified by Directors/Patrons\n" +
         "• Admin approval required\n" +
+        "• One gang only\n" +
         "• Wrong request = denied"
       )
       .setFooter({ text: "Poblacion Roleplay" });
@@ -53,7 +56,19 @@ module.exports = {
       .setPlaceholder("Select your gang...")
       .addOptions(options);
 
-    const row = new ActionRowBuilder().addComponents(select);
+    const dropdownRow = new ActionRowBuilder().addComponents(select);
+
+    /* =========================
+       LEAVE BUTTON
+    ========================= */
+
+    const leaveButton = new ButtonBuilder()
+      .setCustomId("gang_leave")
+      .setLabel("Leave Gang")
+      .setStyle(ButtonStyle.Danger)
+      .setEmoji("🚪");
+
+    const buttonRow = new ActionRowBuilder().addComponents(leaveButton);
 
     /* =========================
        SEND PANEL
@@ -61,7 +76,7 @@ module.exports = {
 
     await interaction.channel.send({
       embeds: [embed],
-      components: [row]
+      components: [dropdownRow, buttonRow]
     });
 
     return interaction.reply({
