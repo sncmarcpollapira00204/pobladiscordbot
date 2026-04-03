@@ -1,20 +1,22 @@
 module.exports = {
-  "DSF": { name: "DON SAFLEECA DE FAMILIA", roleId: "1470015537244278826", prefix: "DSF" },
-  "RL": { name: "RUTHLESS", roleId: "1464851910547738809", prefix: "RL" },
-  "TRD": { name: "TRIAD", roleId: "1464852021340405885", prefix: "TRD" },
-  "7xM": { name: "737xMIKAELSON", roleId: "1464852040210714797", prefix: "7xM" },
-  "NTS": { name: "NOTORIOUS OUTLAWS", roleId: "1464851984082534534", prefix: "NTS" },
-  "FT": { name: "FIRST TRIAD", roleId: "1464851838644785306", prefix: "FT" },
-  "L2K": { name: "LOYALTY TO KILL", roleId: "1474727291450818610", prefix: "L2K" },
-  "417": { name: "417 CREW", roleId: "1477157970499600494", prefix: "417" },
-  "SC": { name: "SUSHI CARTEL", roleId: "1470014612723208325", prefix: "SC" },
-  "HSD": { name: "HELLSIDE", roleId: "1482739764795805877", prefix: "HSD" },
-  "SIN": { name: "SONDER IN SANITY", roleId: "1482718425464967282", prefix: "SIN" },
-  "Y2K": { name: "YOUNG 2 KILL", roleId: "1484454000886812743", prefix: "Y2K" },
-  "PTR": { name: "PATRIARCA", roleId: "1464851637414658091", prefix: "PTR" },
-  "TC": { name: "TAMEZ CARTEL", roleId: "1489407804916629535", prefix: "TC" },
-  "PG": { name: "PERWICIO GANG", roleId: "1484454154351939704", prefix: "PG" },
-  "LSS": { name: "LOS STRATOS SYNDICATE", roleId: "1476092949459767317", prefix: "LSS" },
-  "OG": { name: "ORANGE GANG", roleId: "1480482742079721554", prefix: "OG" },
-  "88s": { name: "SHINRIN 88", roleId: "1484391158179299428", prefix: "88s" }
+  "DCG": {
+    name: "DEVIL CRIPS GANG",
+    roleId: "1471171687394447360",
+    prefix: "DCG"
+  },
+  "4K": {
+    name: "KWATRO KANTOS",
+    roleId: "1471171718230839569",
+    prefix: "4K"
+  },
+  "FT": {
+    name: "FIRST TRIAD",
+    roleId: "1471171753202942245",
+    prefix: "FT"
+  },
+  "RM": {
+    name: "ROYAL MAFIA",
+    roleId: "1471171775529357342",
+    prefix: "RM"
+  }
 };

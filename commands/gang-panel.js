@@ -59,24 +59,10 @@ module.exports = {
     ========================= */
 
         const gangEmojis = {
-        DSF: "🟤",
-        RL: "🔵",
-        TRD: "⚫",
-        "7xM": "⚪",
-        NTS: "🟣",
-        FT: "🟡",
-        L2K: "🔴",
-        "417": "🟥",
-        SC: "🟡",
-        HSD: "🟣",
-        SIN: "🌸",
-        Y2K: "🟫",
-        PTR: "🟠",
-        TC: "🟡",
-        PG: "🔵",
-        LSS: "⚪",
-        OG: "🟠",
-        "88s": "🟤"
+          DCG: "🔵",   // Blue
+          "4K": "⚫",  // Black
+          FT: "🟡",   // Yellow
+          RM: "🔷"    // Cyan
         };
 
         const options = Object.entries(gangs).map(([key, gang]) => ({
