@@ -1,12 +1,9 @@
-// Made / Edited by @Maxine
+// Made / Edited by @Maxine (Optimized by ChatGPT)
 
 require("dotenv").config();
 
 const fs = require("fs");
 const path = require("path");
-const namechangeHandler = require("./interactions/namechange");
-// ❌ Removed messageFilter
-
 
 const {
   Client,
@@ -14,6 +11,18 @@ const {
   GatewayIntentBits,
   Events
 } = require("discord.js");
+
+/* ===============================
+   HANDLERS
+=============================== */
+
+const namechangeHandler = require("./interactions/namechange");
+const gangSelectHandler = require("./interactions/gangSelect");
+const gangRequestHandler = require("./interactions/gangRequest");
+
+/* ===============================
+   CLIENT SETUP
+=============================== */
 
 const client = new Client({
   intents: [
@@ -24,21 +33,21 @@ const client = new Client({
   ]
 });
 
-// ❌ Removed messageCreate listener for messageFilter
-
 process.on("unhandledRejection", console.error);
 process.on("uncaughtException", console.error);
 
 /* ===============================
-   LOAD BUTTON & MODAL HANDLERS
-   =============================== */
+   LOAD HANDLERS
+=============================== */
 
 const buttonHandlers = [
+  gangRequestHandler, // 🔥 PRIORITY FIRST
   require("./interactions/buttons"),
-  require("./interactions/noVoucherButtons"),
+  require("./interactions/noVoucherButtons")
 ];
 
 const modalHandlers = [
+  gangRequestHandler, // 🔥 PRIORITY FIRST
   require("./interactions/modals"),
   require("./interactions/noVoucherModal"),
   require("./interactions/revokeModal")
@@ -46,7 +55,7 @@ const modalHandlers = [
 
 /* ===============================
    SLASH COMMANDS
-   =============================== */
+=============================== */
 
 client.commands = new Collection();
 
@@ -66,7 +75,7 @@ for (const file of commandFiles) {
 
 /* ===============================
    READY
-   =============================== */
+=============================== */
 
 client.once(Events.ClientReady, async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
@@ -89,40 +98,59 @@ client.once(Events.ClientReady, async () => {
 
 /* ===============================
    INTERACTION HANDLER
-   =============================== */
+=============================== */
 
 client.on(Events.InteractionCreate, async interaction => {
   try {
 
-    // SLASH COMMANDS
+    /* =========================
+       SELECT MENU (GANG)
+    ========================= */
+    if (interaction.isStringSelectMenu()) {
+      await gangSelectHandler(interaction);
+      return;
+    }
+
+    /* =========================
+       SLASH COMMANDS
+    ========================= */
     if (interaction.isChatInputCommand()) {
       const command = client.commands.get(interaction.commandName);
       if (!command) return;
 
-      await Promise.resolve(command.execute(interaction));
+      await command.execute(interaction);
+      return;
     }
 
-    // BUTTONS
-    else if (interaction.isButton()) {
+    /* =========================
+       BUTTONS
+    ========================= */
+    if (interaction.isButton()) {
 
+      // 🔥 NAME CHANGE FIRST
       await namechangeHandler(interaction);
       if (interaction.replied || interaction.deferred) return;
 
+      // 🔥 ALL BUTTON HANDLERS
       for (const handler of buttonHandlers) {
         await handler(interaction);
-        if (interaction.replied || interaction.deferred) break;
+        if (interaction.replied || interaction.deferred) return;
       }
     }
 
-    // MODALS
-    else if (interaction.isModalSubmit()) {
+    /* =========================
+       MODALS
+    ========================= */
+    if (interaction.isModalSubmit()) {
 
+      // 🔥 NAME CHANGE FIRST
       await namechangeHandler(interaction);
       if (interaction.replied || interaction.deferred) return;
 
+      // 🔥 ALL MODAL HANDLERS
       for (const handler of modalHandlers) {
         await handler(interaction);
-        if (interaction.replied || interaction.deferred) break;
+        if (interaction.replied || interaction.deferred) return;
       }
     }
 
@@ -144,6 +172,6 @@ client.on(Events.InteractionCreate, async interaction => {
 
 /* ===============================
    LOGIN
-   =============================== */
+=============================== */
 
 client.login(process.env.TOKEN);
