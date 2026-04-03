@@ -34,6 +34,51 @@ async function safeExecute(interaction, fn) {
 module.exports = async (interaction) => {
 
   /* =========================
+   UNROLE MODAL SUBMIT
+========================= */
+if (interaction.isModalSubmit() && interaction.customId === "unrole_modal") {
+  return safeExecute(interaction, async () => {
+
+    await interaction.deferReply({ flags: 64 });
+
+    const agree = interaction.fields.getTextInputValue("agree");
+    const ingameName = interaction.fields.getTextInputValue("ingame_name");
+
+    if (agree.toLowerCase() !== "yes") {
+      return interaction.editReply("❌ You must type YES.");
+    }
+
+    const embed = new EmbedBuilder()
+      .setColor(0xff0000)
+      .setTitle("📤 UNROLE REQUEST")
+      .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
+      .addFields(
+        { name: "DISCORD USER", value: `<@${interaction.user.id}>` },
+        { name: "IN-GAME NAME", value: ingameName },
+        { name: "COOLDOWN AGREEMENT", value: agree },
+        { name: "STATUS", value: "🟡 PENDING REVIEW" }
+      )
+      .setFooter({ text: `UNROLE|${interaction.user.id}` });
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId("unrole_approve").setLabel("Approve").setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId("unrole_deny").setLabel("Deny").setStyle(ButtonStyle.Danger)
+    );
+
+    const channel = await interaction.client.channels.fetch(config.gangRequestChannelId)
+      .catch(() => null);
+
+    if (!channel) {
+      return interaction.editReply("❌ Request channel not found.");
+    }
+
+    await channel.send({ embeds: [embed], components: [row] });
+
+    return interaction.editReply("✅ Unrole request submitted.");
+  });
+}
+
+  /* =========================
      UNROLE BUTTON
   ========================= */
   if (interaction.isButton() && interaction.customId === "gang_leave") {
