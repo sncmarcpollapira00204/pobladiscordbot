@@ -264,15 +264,20 @@ if (interaction.isModalSubmit() && interaction.customId === "unrole_modal") {
     /* =========================
        DENY
     ========================= */
-    if (interaction.customId === "gang_deny") {
+      if (interaction.customId === "gang_deny") {
 
-      const newEmbed = EmbedBuilder.from(embed)
-        .spliceFields(4, 1, { name: "STATUS", value: "❌ DENIED" });
+        if (!interaction.member.permissions.has("Administrator")) {
+          return interaction.reply({ content: "❌ You do not have permission to deny this request.", flags: 64 });
+        }
 
-      await interaction.message.edit({ embeds: [newEmbed], components: [] });
+        const newEmbed = EmbedBuilder.from(embed)
+          .spliceFields(4, 1, { name: "STATUS", value: "❌ DENIED" })
+          .addFields({ name: "DENIED BY", value: `${interaction.user}` });
 
-      return interaction.reply({ content: "❌ Request denied.", flags: 64 });
-    }
+        await interaction.message.edit({ embeds: [newEmbed], components: [] });
+
+        return interaction.reply({ content: "❌ Request denied.", flags: 64 });
+      }
     
     /* =========================
         UNROLE APPROVE
