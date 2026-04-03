@@ -150,10 +150,10 @@ if (interaction.isModalSubmit() && interaction.customId === "unrole_modal") {
           { name: "DISCORD USER", value: `<@${interaction.user.id}>` },
           { name: "IN-GAME NAME", value: ingameName },
           { name: "ROLE REQUEST", value: gang.name },
-          { name: "VERIFICATION", value: "❌ NOT VERIFIED" },
-          { name: "STATUS", value: "🟡 WAITING FOR VERIFICATION" }
+          { name: "PATRON/A APPROVAL", value: "❌ NOT APPROVED" },
+          { name: "STATUS", value: "🟡 WAITING FOR PATRON APPROVAL" }
         )
-        .setFooter({ text: `GANG|${interaction.user.id}|${gangKey}` });
+        .setFooter({ text: `${gang.name}` });
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId("gang_verify").setLabel("Verify").setStyle(ButtonStyle.Primary),
@@ -187,7 +187,10 @@ if (interaction.isModalSubmit() && interaction.customId === "unrole_modal") {
     const footer = embed.footer?.text;
     if (!footer) return;
 
-    const parts = footer.split("|");
+    let parts = [];
+    if (footer.includes("|")) {
+      parts = footer.split("|");
+    }
 
     /* =========================
        VERIFY
@@ -199,9 +202,9 @@ if (interaction.isModalSubmit() && interaction.customId === "unrole_modal") {
       }
 
       const newEmbed = EmbedBuilder.from(embed)
-        .spliceFields(3, 1, { name: "VERIFICATION", value: "✅ VERIFIED" })
-        .spliceFields(4, 1, { name: "STATUS", value: "🟢 READY FOR APPROVAL" })
-        .addFields({ name: "VERIFIED BY", value: `${interaction.user}` });
+      .spliceFields(3, 1, { name: "PATRON/A APPROVAL", value: "✅ APPROVED" })
+      .spliceFields(4, 1, { name: "STATUS", value: "🔵 READY FOR ADMIN APPROVAL" })
+      .addFields({ name: "PATRON/A NAME", value: `${interaction.user}` });
 
       await interaction.message.edit({ embeds: [newEmbed] });
 
@@ -217,14 +220,20 @@ if (interaction.isModalSubmit() && interaction.customId === "unrole_modal") {
         return interaction.reply({ content: "❌ Admin permission required.", flags: 64 });
       }
 
-      const verification = embed.fields.find(f => f.name === "VERIFICATION");
-      if (!verification || !verification.value.includes("VERIFIED")) {
+      const verification = embed.fields.find(f => f.name === "PATRON/A APPROVAL");
+      if (!verification || !verification.value.includes("APPROVED")) {
         return interaction.reply({ content: "❌ This request is not verified yet.", flags: 64 });
       }
 
-      const userId = parts[1];
-      const gangKey = parts[2];
-      const gang = gangs[gangKey];
+      const userField = embed.fields.find(f => f.name === "DISCORD USER");
+      const userId = userField.value.replace(/[<@!>]/g, "");
+      const roleField = embed.fields.find(f => f.name === "ROLE REQUEST");
+
+      const gang = Object.values(gangs).find(g => g.name === roleField.value);
+
+      if (!gang) {
+        return interaction.reply({ content: "❌ Gang not found.", flags: 64 });
+      }
 
       const member = await interaction.guild.members.fetch(userId).catch(() => null);
 
