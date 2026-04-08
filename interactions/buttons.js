@@ -89,51 +89,63 @@ module.exports = async (interaction) => {
   /* =========================
      VOUCH
   ========================= */
-  if (interaction.customId === "vouch") {
+if (interaction.customId === "vouch") {
 
-    if (!isCitizen(interaction)) {
-      return safeReply(interaction, "❌ Only **Citizens** can vouch.");
-    }
-
-    if (!desc.includes("NEW WHITELIST APPLICATION")) {
-      return safeReply(interaction, "❌ This is not an application.");
-    }
-
-    const userMatch = desc.match(/<@(\d+)>/);
-    if (!userMatch) return safeReply(interaction, "❌ User not found.");
-
-    const userId = userMatch[1];
-
-    let vouches = [];
-    const match = desc.match(/👥 VOUCHED BY: ([\s\S]*)/);
-
-    if (match && match[1] !== "None") {
-      vouches = match[1].split(/,\s|\n/).filter(v => v);
-    }
-
-    const voucher = `<@${interaction.user.id}>`;
-
-    if (vouches.includes(voucher)) {
-      vouches = vouches.filter(v => v !== voucher);
-    } else {
-      vouches.push(voucher);
-    }
-
-    const formatted = formatVouches(vouches);
-
-    desc = desc
-      .replace("🟡 PENDING WHITELIST APPLICATION", "")
-      .replace(
-        /👥 VOUCHED BY: ([\s\S]*)/,
-        `👥 VOUCHED BY: ${formatted}\n\n🔵 PENDING ADMIN REVIEW`
-      );
-
-    embed.setDescription(desc);
-
-    await message.edit({ embeds: [embed] });
-
-    return safeReply(interaction, "✅ Vouch updated.");
+  if (!isCitizen(interaction)) {
+    return safeReply(interaction, "❌ Only **Citizens** can vouch.");
   }
+
+  if (!desc.includes("NEW WHITELIST APPLICATION")) {
+    return safeReply(interaction, "❌ This is not an application.");
+  }
+
+  const userMatch = desc.match(/<@(\d+)>/);
+  if (!userMatch) return safeReply(interaction, "❌ User not found.");
+
+  const applicantId = userMatch[1];
+
+  if (interaction.user.id === applicantId) {
+    return safeReply(interaction, "❌ You cannot vouch yourself.");
+  }
+
+  // GET CURRENT VOUCHES
+  let vouches = [];
+  const match = desc.match(/👥 VOUCHED BY: (.*)/);
+
+  if (match && match[1] !== "None") {
+    vouches = match[1].split(/,\s|\n/).filter(v => v);
+  }
+
+  const voucher = `<@${interaction.user.id}>`;
+
+  let action;
+
+  // 🔁 TOGGLE
+  if (vouches.includes(voucher)) {
+    vouches = vouches.filter(v => v !== voucher);
+    action = "removed";
+  } else {
+    vouches.push(voucher);
+    action = "added";
+  }
+
+  const formatted = formatVouches(vouches);
+
+  desc = desc
+    .replace(/🟡 PENDING WHITELIST APPLICATION/g, "")
+    .replace(/🔵 PENDING ADMIN REVIEW/g, "")
+    .replace(/👥 VOUCHED BY: .*/, `👥 VOUCHED BY: ${formatted}`)
+    + (vouches.length ? `\n\n🔵 PENDING ADMIN REVIEW` : `\n\n🟡 PENDING WHITELIST APPLICATION`);
+
+  embed.setDescription(desc);
+
+  await message.edit({ embeds: [embed] });
+
+  return safeReply(
+    interaction,
+    action === "added" ? "✅ Vouch added." : "❌ Vouch removed."
+  );
+}
 
   /* =========================
      APPROVE
