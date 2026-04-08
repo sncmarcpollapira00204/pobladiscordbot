@@ -36,16 +36,52 @@ const safeReply = async (interaction, content) => {
 module.exports = async (interaction) => {
   if (!interaction.isButton()) return;
 
+  /* =========================
+     OPEN MODAL (PANEL)
+  ========================= */
+  if (interaction.customId === "open_whitelist_modal") {
+
+    const modal = new ModalBuilder()
+      .setCustomId("whitelist_submit")
+      .setTitle("📄 Whitelist Application");
+
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId("character_name")
+          .setLabel("Character Name")
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true)
+      ),
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId("steam_profile")
+          .setLabel("Steam Profile URL")
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true)
+      )
+    );
+
+    return interaction.showModal(modal);
+  }
+
   const message = interaction.message;
-  if (!message.embeds.length) return;
+
+  if (!message.embeds.length) {
+    return safeReply(interaction, "❌ Invalid application embed.");
+  }
 
   const embed = EmbedBuilder.from(message.embeds[0]);
-  let desc = embed.data.description;
+  let desc = embed.data.description || "";
 
   /* =========================
      VOUCH
   ========================= */
   if (interaction.customId === "vouch") {
+
+    if (!desc.includes("NEW WHITELIST APPLICATION")) {
+      return safeReply(interaction, "❌ This is not an application.");
+    }
 
     const userMatch = desc.match(/<@(\d+)>/);
     if (!userMatch) return safeReply(interaction, "❌ User not found.");
@@ -86,6 +122,10 @@ module.exports = async (interaction) => {
   ========================= */
   if (interaction.customId === "approve") {
 
+    if (!desc.includes("NEW WHITELIST APPLICATION")) {
+      return safeReply(interaction, "❌ This is not an application.");
+    }
+
     desc = desc.replace(
       "🔵 PENDING ADMIN REVIEW",
       `✅ APPROVED BY: ${interaction.user}`
@@ -105,6 +145,10 @@ module.exports = async (interaction) => {
      DENY
   ========================= */
   if (interaction.customId === "deny") {
+
+    if (!desc.includes("NEW WHITELIST APPLICATION")) {
+      return safeReply(interaction, "❌ This is not an application.");
+    }
 
     const modal = new ModalBuilder()
       .setCustomId(`deny_modal:${message.id}`)

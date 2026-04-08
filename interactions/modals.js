@@ -39,20 +39,15 @@ function formatVouches(vouches) {
     await interaction.deferReply({ flags: 64 }); // prevent timeout
 
     const characterName = interaction.fields.getTextInputValue("character_name");
-    const age = interaction.fields.getTextInputValue("age");
     const steamProfile = interaction.fields.getTextInputValue("steam_profile");
 
     /* VALIDATION */
 
-    if (isNaN(age)) {
-      return interaction.editReply("❌ Character age must be a number.");
-    }
+    const isValidSteam =
+      /^https:\/\/steamcommunity\.com\/(id|profiles)\/.+/.test(steamProfile);
 
-    if (
-      !steamProfile.startsWith("https://steamcommunity.com/id/") &&
-      !steamProfile.startsWith("https://steamcommunity.com/profiles/")
-    ) {
-      return interaction.editReply("❌ Please provide a valid Steam profile link.");
+    if (!isValidSteam) {
+      return interaction.editReply("❌ Invalid Steam profile link.");
     }
 
     /* SAVE TO DATABASE ✅ */
@@ -109,7 +104,7 @@ function formatVouches(vouches) {
 
       🎭 CHARACTER DETAILS:
       IN-GAME NAME: ${characterName}
-      STEAM LINK: ${steamProfile}
+      STEAM LINK: [Steam Profile](${steamProfile})
 
       👥 VOUCHED BY: None`;
 
@@ -191,7 +186,7 @@ function formatVouches(vouches) {
     ❌ DENIED BY: ${interaction.user}
     📄 REASON: ${reason}`
     );
-    
+
     await message.edit({
       embeds: [embed],
       components: []
