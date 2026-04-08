@@ -8,6 +8,18 @@ const {
 
 const config = require("../config.json");
 
+/* CHECK CITIZEN */
+const isCitizen = (interaction) => {
+  return interaction.member.roles.cache.has(config.citizenRoleId);
+};
+
+/* CHECK ADMIN */
+const isAdmin = (interaction) => {
+  return interaction.member.roles.cache.some(role =>
+    config.adminRoleIds.includes(role.id)
+  );
+};
+
 /* FORMAT VOUCHES */
 function formatVouches(vouches) {
   if (!vouches.length) return "None";
@@ -79,6 +91,10 @@ module.exports = async (interaction) => {
   ========================= */
   if (interaction.customId === "vouch") {
 
+    if (!isCitizen(interaction)) {
+      return safeReply(interaction, "❌ Only **Citizens** can vouch.");
+    }
+
     if (!desc.includes("NEW WHITELIST APPLICATION")) {
       return safeReply(interaction, "❌ This is not an application.");
     }
@@ -105,10 +121,12 @@ module.exports = async (interaction) => {
 
     const formatted = formatVouches(vouches);
 
-    desc = desc.replace(
-      /👥 VOUCHED BY: ([\s\S]*)/,
-      `👥 VOUCHED BY: ${formatted}\n\n🔵 PENDING ADMIN REVIEW`
-    );
+    desc = desc
+      .replace("🟡 PENDING WHITELIST APPLICATION", "")
+      .replace(
+        /👥 VOUCHED BY: ([\s\S]*)/,
+        `👥 VOUCHED BY: ${formatted}\n\n🔵 PENDING ADMIN REVIEW`
+      );
 
     embed.setDescription(desc);
 
@@ -121,6 +139,10 @@ module.exports = async (interaction) => {
      APPROVE
   ========================= */
   if (interaction.customId === "approve") {
+
+    if (!isAdmin(interaction)) {
+      return safeReply(interaction, "❌ Only **Admins** can approve.");
+    }
 
     if (!desc.includes("NEW WHITELIST APPLICATION")) {
       return safeReply(interaction, "❌ This is not an application.");
@@ -145,6 +167,10 @@ module.exports = async (interaction) => {
      DENY
   ========================= */
   if (interaction.customId === "deny") {
+
+    if (!isAdmin(interaction)) {
+      return safeReply(interaction, "❌ Only **Admins** can deny.");
+    }
 
     if (!desc.includes("NEW WHITELIST APPLICATION")) {
       return safeReply(interaction, "❌ This is not an application.");

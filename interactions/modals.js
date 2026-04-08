@@ -92,32 +92,34 @@ function formatVouches(vouches) {
 
 
 
-/* NEW EMBED DESIGN */
+/* NEW WHITELIST EMBED DESIGN */
 
-      const description = 
-      `NEW WHITELIST APPLICATION
+const description = 
+`NEW WHITELIST APPLICATION
 
-      👤 APPLICANT INFORMATION:
-      DISCORD USER: ${interaction.user}
-      ACCOUNT AGE: ${accountAge}
+👤 APPLICANT INFORMATION:
+DISCORD USER: ${interaction.user}
+ACCOUNT AGE: ${accountAge}
 
 
-      🎭 CHARACTER DETAILS:
-      IN-GAME NAME: ${characterName}
-      STEAM LINK: [Steam Profile](${steamProfile})
+🎭 CHARACTER DETAILS:
+IN-GAME NAME: ${characterName}
+STEAM LINK: [Steam Profile](${steamProfile})
 
-      👥 VOUCHED BY: None`;
+👥 VOUCHED BY: None
 
-      const embed = new EmbedBuilder()
-        .setColor(0xff8c00)
-        .setAuthor({
-          name: "NEW WHITELIST APPLICATION",
-          iconURL: interaction.guild.iconURL({ dynamic: true })
-        })
-        .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
-        .setDescription(description)
-        .setFooter({ text: "Poblacion City Roleplay" })
-        .setTimestamp();
+🟡 PENDING WHITELIST APPLICATION`;
+
+const embed = new EmbedBuilder()
+.setColor(0xff8c00)
+.setAuthor({
+name: "POBLACION ROLEPLAY",
+iconURL: interaction.guild.iconURL({ dynamic: true })
+})
+.setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
+.setDescription(description)
+.setFooter({ text: "Poblacion City Roleplay" })
+.setTimestamp();
 
     /* BUTTONS */
 
