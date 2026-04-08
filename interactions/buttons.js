@@ -7,6 +7,7 @@ const {
 } = require("discord.js");
 
 const config = require("../config.json");
+const pool = require("../database");
 
 /* CHECK CITIZEN */
 const isCitizen = (interaction) => {
@@ -86,58 +87,75 @@ module.exports = async (interaction) => {
   const embed = EmbedBuilder.from(message.embeds[0]);
   let desc = embed.data.description || "";
 
-  /* =========================
-     VOUCH
-  ========================= */
-  if (interaction.customId === "vouch") {
+/* =========================
+   VOUCH (DB BASED)
+========================= */
+if (interaction.customId === "vouch") {
 
-    if (!isCitizen(interaction)) {
-      return safeReply(interaction, "❌ Only **Citizens** can vouch.");
-    }
+  if (!isCitizen(interaction)) {
+    return safeReply(interaction, "❌ Only **Citizens** can vouch.");
+  }
 
-    if (!desc.includes("NEW WHITELIST APPLICATION")) {
-      return safeReply(interaction, "❌ This is not an application.");
-    }
+  if (!desc.includes("NEW WHITELIST APPLICATION")) {
+    return safeReply(interaction, "❌ This is not an application.");
+  }
 
-    const userMatch = desc.match(/<@(\d+)>/);
-    if (!userMatch) return safeReply(interaction, "❌ User not found.");
+  const userMatch = desc.match(/<@(\d+)>/);
+  if (!userMatch) return safeReply(interaction, "❌ User not found.");
 
-    const applicantId = userMatch[1];
+  const applicantId = userMatch[1];
 
-    if (interaction.user.id === applicantId) {
-      return safeReply(interaction, "❌ You cannot vouch yourself.");
-    }
+  if (interaction.user.id === applicantId) {
+    return safeReply(interaction, "❌ You cannot vouch yourself.");
+  }
 
-    const nameMatch = desc.match(/IN-GAME NAME: (.*)/);
-    const steamMatch = desc.match(/\((https:\/\/steamcommunity\.com\/.*?)\)/);
-    const ageMatch = desc.match(/ACCOUNT AGE: (.*)/);
+  // ✅ GET DATA FROM DB
+  const result = await pool.query(
+    "SELECT * FROM whitelist WHERE discord_id = $1",
+    [applicantId]
+  );
 
-    const characterName = nameMatch ? nameMatch[1] : "Unknown";
-    const steam = steamMatch ? steamMatch[1] : "Unknown";
-    const accountAge = ageMatch ? ageMatch[1] : "Unknown";
+  if (result.rows.length === 0) {
+    return safeReply(interaction, "❌ No database record found.");
+  }
 
-    let vouches = [];
-    const match = desc.match(/👥 VOUCHED BY: (.*)/);
+  let data = result.rows[0];
 
-    if (match && match[1] !== "None") {
-      vouches = match[1].split(/,\s|\n/).filter(v => v);
-    }
+  // ✅ PARSE VOUCHES FROM DB
+  let vouches = data.vouchers && data.vouchers !== "None"
+    ? data.vouchers.split(", ")
+    : [];
 
-    const voucher = `<@${interaction.user.id}>`;
+  const voucher = `<@${interaction.user.id}>`;
+  let action;
 
-    let action;
+  // 🔁 TOGGLE
+  if (vouches.includes(voucher)) {
+    vouches = vouches.filter(v => v !== voucher);
+    action = "removed";
+  } else {
+    vouches.push(voucher);
+    action = "added";
+  }
 
-    if (vouches.includes(voucher)) {
-      vouches = vouches.filter(v => v !== voucher);
-      action = "removed";
-    } else {
-      vouches.push(voucher);
-      action = "added";
-    }
+  // ✅ SAVE TO DB
+  const updatedVouches = vouches.length ? vouches.join(", ") : "None";
 
-    const formatted = formatVouches(vouches);
+  await pool.query(
+    "UPDATE whitelist SET vouchers = $1 WHERE discord_id = $2",
+    [updatedVouches, applicantId]
+  );
 
-    const newDesc = 
+  // ✅ REBUILD EMBED (same design, but from DB)
+  const nameMatch = desc.match(/IN-GAME NAME: (.*)/);
+  const steamMatch = desc.match(/\((https:\/\/steamcommunity\.com\/.*?)\)/);
+  const ageMatch = desc.match(/ACCOUNT AGE: (.*)/);
+
+  const characterName = nameMatch ? nameMatch[1] : "Unknown";
+  const steam = steamMatch ? steamMatch[1] : "Unknown";
+  const accountAge = ageMatch ? ageMatch[1] : "Unknown";
+
+  const newDesc = 
 `NEW WHITELIST APPLICATION
 
 👤 APPLICANT INFORMATION:
@@ -148,19 +166,19 @@ ACCOUNT AGE: ${accountAge}
 IN-GAME NAME: ${characterName}
 STEAM LINK: [Steam Profile](${steam})
 
-👥 VOUCHED BY: ${formatted}
+👥 VOUCHED BY: ${updatedVouches}
 
 ${vouches.length ? "🔵 PENDING ADMIN REVIEW" : "🟡 PENDING WHITELIST APPLICATION"}`;
 
-    embed.setDescription(newDesc);
+  embed.setDescription(newDesc);
 
-    await message.edit({ embeds: [embed] });
+  await message.edit({ embeds: [embed] });
 
-    return safeReply(
-      interaction,
-      action === "added" ? "✅ Vouch added." : "❌ Vouch removed."
-    );
-  }
+  return safeReply(
+    interaction,
+    action === "added" ? "✅ Vouch added." : "❌ Vouch removed."
+  );
+}
 
   /* =========================
      APPROVE (FIXED)
