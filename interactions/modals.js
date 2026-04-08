@@ -36,6 +36,10 @@ function formatVouches(vouches) {
 
   if (interaction.customId === "whitelist_submit") {
 
+    if (interaction.member.roles.cache.has(config.citizenRoleId)) {
+    return interaction.editReply("❌ You already have the **Citizen** role. No need to apply.");
+  }
+
     await interaction.deferReply({ flags: 64 }); // prevent timeout
 
     const characterName = interaction.fields.getTextInputValue("character_name");
@@ -124,9 +128,9 @@ iconURL: interaction.guild.iconURL({ dynamic: true })
     /* BUTTONS */
 
     const buttons = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId("vouch").setLabel("Vouch").setEmoji("🖐️").setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId("approve").setLabel("Approve").setEmoji("✅").setStyle(ButtonStyle.Success),
-      new ButtonBuilder().setCustomId("deny").setLabel("Deny").setEmoji("✖️").setStyle(ButtonStyle.Danger)
+      new ButtonBuilder().setCustomId("vouch").setLabel("VOUCH").setEmoji("🖐️").setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId("approve").setLabel("APPROVE").setEmoji("✅").setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId("deny").setLabel("DENY").setEmoji("✖️").setStyle(ButtonStyle.Danger)
     );
 
     const channel = interaction.client.channels.cache.get(config.whitelistChannelId);
