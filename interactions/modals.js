@@ -15,6 +15,21 @@ const COOLDOWN_TIME = 1 * 60 * 1000;
 module.exports = async (interaction) => {
   if (!interaction.isModalSubmit()) return;
 
+function formatVouches(vouches) {
+  if (!vouches.length) return "None";
+
+  let result = "";
+  for (let i = 0; i < vouches.length; i++) {
+    if (i % 2 === 0) {
+      result += vouches[i];
+    } else {
+      result += " , " + vouches[i] + "\n";
+    }
+  }
+
+  return result.trim();
+}
+
   /* =========================
      WHITELIST SUBMIT
   ========================= */
@@ -80,53 +95,34 @@ module.exports = async (interaction) => {
 
     const SPACE = "\u200B";
 
-    /* EMBED */
 
-    const embed = new EmbedBuilder()
-      .setColor(0xff8c00)
-      .setAuthor({
-        name: "[ NEW WHITELIST APPLICATION ]",
-        iconURL: interaction.guild.iconURL({ dynamic: true })
-      })
-      .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
-      .addFields(
-        { name: SPACE, value: "👤 **APPLICANT INFORMATION:**" },
-        {
-          name: SPACE,
-          value:
-            `**Discord User:** ${interaction.user}\n` +
-            `**Account Age:** ${accountAge}`
-        },
 
-        { name: SPACE, value: "🎭 **CHARACTER DETAILS:**" },
-        {
-          name: SPACE,
-          value:
-            `**Character Name:** ${characterName}\n` +
-            `**Character Age:** ${age}`
-        },
+/* NEW EMBED DESIGN */
 
-        { name: SPACE, value: "🔗 **STEAM LINK:**" },
-        {
-          name: SPACE,
-          value: `🌐 [Steam Profile](${steamProfile})`
-        },
+      const description = 
+      `NEW WHITELIST APPLICATION
 
-        { name: SPACE, value: "📊 **APPLICATION STATUS:**" },
-        {
-          name: SPACE,
-          value: "🟡 **PENDING REVIEW**"
-        },
+      👤 APPLICANT INFORMATION:
+      DISCORD USER: ${interaction.user}
+      ACCOUNT AGE: ${accountAge}
 
-        { name: SPACE, value: SPACE },
 
-        {
-          name: "👥 **VOUCHED BY:**",
-          value: "None"
-        }
-      )
-      .setFooter({ text: "Poblacion City Roleplay" })
-      .setTimestamp();
+      🎭 CHARACTER DETAILS:
+      IN-GAME NAME: ${characterName}
+      STEAM LINK: ${steamProfile}
+
+      👥 VOUCHED BY: None`;
+
+      const embed = new EmbedBuilder()
+        .setColor(0xff8c00)
+        .setAuthor({
+          name: "NEW WHITELIST APPLICATION",
+          iconURL: interaction.guild.iconURL({ dynamic: true })
+        })
+        .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
+        .setDescription(description)
+        .setFooter({ text: "Poblacion City Roleplay" })
+        .setTimestamp();
 
     /* BUTTONS */
 
@@ -187,11 +183,15 @@ module.exports = async (interaction) => {
 
     statusField.value = "❌ **DENIED**";
 
-    embed.addFields(
-      { name: "❌ **DENIED BY**", value: `${interaction.user}` },
-      { name: "📄 **DENIAL REASON**", value: reason }
-    );
+    const oldDesc = embed.data.description;
 
+    embed.setDescription(
+      oldDesc + `
+
+    ❌ DENIED BY: ${interaction.user}
+    📄 REASON: ${reason}`
+    );
+    
     await message.edit({
       embeds: [embed],
       components: []
