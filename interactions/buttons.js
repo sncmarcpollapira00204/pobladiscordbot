@@ -181,7 +181,7 @@ ${vouches.length ? "🔵 PENDING ADMIN REVIEW" : "🟡 PENDING WHITELIST APPLICA
 
     desc = desc.replace(
       "🔵 PENDING ADMIN REVIEW",
-      `✅ APPROVED BY: ${interaction.user}`
+      `✅ APPROVED BY ADMIN: ${interaction.user}`
     );
 
     embed.setDescription(desc);
