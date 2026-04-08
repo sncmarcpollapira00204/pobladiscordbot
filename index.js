@@ -1,5 +1,3 @@
-// Made / Edited by @Maxine (Optimized by ChatGPT)
-
 require("dotenv").config();
 
 const fs = require("fs");
@@ -13,18 +11,17 @@ const {
 } = require("discord.js");
 
 /* ===============================
-   HANDLERS
+   HANDLERS (ONLY WHAT YOU NEED)
 =============================== */
 
 const namechangeHandler = require("./interactions/namechange");
 
-// GANG
-const gangSelectHandler = require("./interactions/gangSelect");
-const gangRequestHandler = require("./interactions/gangRequest");
+// ✅ ONLY USE MERGED SYSTEM
+const requestHandler = require("./interactions/requestHandler");
 
-// ✅ JOB (ADDED ONLY — walang binago sa iba)
+// SELECT HANDLERS (UI only)
+const gangSelectHandler = require("./interactions/gangSelect");
 const jobSelectHandler = require("./interactions/jobSelect");
-const jobRequestHandler = require("./interactions/jobRequest");
 
 /* ===============================
    CLIENT SETUP
@@ -43,39 +40,16 @@ process.on("unhandledRejection", console.error);
 process.on("uncaughtException", console.error);
 
 /* ===============================
-   LOAD HANDLERS
-=============================== */
-
-const buttonHandlers = [
-  gangRequestHandler, // 🔥 PRIORITY FIRST
-  jobRequestHandler,  // ✅ ADD (job buttons)
-  require("./interactions/buttons"),
-  require("./interactions/noVoucherButtons")
-];
-
-const modalHandlers = [
-  gangRequestHandler, // 🔥 PRIORITY FIRST
-  jobRequestHandler,  // ✅ ADD (job modals)
-  require("./interactions/modals"),
-  require("./interactions/noVoucherModal"),
-  require("./interactions/revokeModal")
-];
-
-/* ===============================
    SLASH COMMANDS
 =============================== */
 
 client.commands = new Collection();
 
 const commandsPath = path.join(__dirname, "commands");
-const commandFiles = fs
-  .readdirSync(commandsPath)
-  .filter(file => file.endsWith(".js"));
+const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith(".js"));
 
 for (const file of commandFiles) {
-  const filePath = path.join(commandsPath, file);
-  const command = require(filePath);
-
+  const command = require(path.join(commandsPath, file));
   if ("data" in command && "execute" in command) {
     client.commands.set(command.data.name, command);
   }
@@ -88,48 +62,35 @@ for (const file of commandFiles) {
 client.once(Events.ClientReady, async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 
-  const restartChannel = "1470750976368578630";
-
   try {
-    const channel = await client.channels.fetch(restartChannel);
-
+    const channel = await client.channels.fetch("1470750976368578630");
     if (channel) {
-      await channel.send({
-        content: "✅ **Gatekeeper is now back online.**"
-      });
+      await channel.send("✅ **Gatekeeper is now back online.**");
     }
-
   } catch (err) {
-    console.error("Failed to send restart confirmation:", err);
+    console.error("Restart message failed:", err);
   }
 });
 
 /* ===============================
-   INTERACTION HANDLER
+   INTERACTIONS
 =============================== */
 
-client.on(Events.InteractionCreate, async interaction => {
+client.on(Events.InteractionCreate, async (interaction) => {
   try {
 
-    /* =========================
-       SELECT MENU
-    ========================= */
+    /* ===== SELECT ===== */
     if (interaction.isStringSelectMenu()) {
-
-      // GANG
       await gangSelectHandler(interaction);
       if (interaction.replied || interaction.deferred) return;
 
-      // ✅ JOB
       await jobSelectHandler(interaction);
       if (interaction.replied || interaction.deferred) return;
 
       return;
     }
 
-    /* =========================
-       SLASH COMMANDS
-    ========================= */
+    /* ===== SLASH ===== */
     if (interaction.isChatInputCommand()) {
       const command = client.commands.get(interaction.commandName);
       if (!command) return;
@@ -138,50 +99,26 @@ client.on(Events.InteractionCreate, async interaction => {
       return;
     }
 
-    /* =========================
-       BUTTONS
-    ========================= */
-    if (interaction.isButton()) {
+    /* ===== BUTTON + MODAL (MERGED SYSTEM ONLY) ===== */
+    if (interaction.isButton() || interaction.isModalSubmit()) {
 
-      // 🔥 NAME CHANGE FIRST
+      // name change priority
       await namechangeHandler(interaction);
       if (interaction.replied || interaction.deferred) return;
 
-      // 🔥 ALL BUTTON HANDLERS
-      for (const handler of buttonHandlers) {
-        await handler(interaction);
-        if (interaction.replied || interaction.deferred) return;
-      }
-    }
-
-    /* =========================
-       MODALS
-    ========================= */
-    if (interaction.isModalSubmit()) {
-
-      // 🔥 NAME CHANGE FIRST
-      await namechangeHandler(interaction);
-      if (interaction.replied || interaction.deferred) return;
-
-      // 🔥 ALL MODAL HANDLERS
-      for (const handler of modalHandlers) {
-        await handler(interaction);
-        if (interaction.replied || interaction.deferred) return;
-      }
+      // ✅ ONE HANDLER ONLY
+      await requestHandler(interaction);
+      return;
     }
 
   } catch (error) {
     console.error("❌ Interaction error:", error);
 
-    try {
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: "❌ An unexpected error occurred.",
-          ephemeral: true
-        }).catch(() => {});
-      }
-    } catch (err) {
-      console.error("❌ Failed to send error response:", err);
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({
+        content: "❌ Unexpected error occurred.",
+        ephemeral: true
+      }).catch(() => {});
     }
   }
 });
