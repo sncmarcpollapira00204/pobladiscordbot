@@ -118,7 +118,7 @@ iconURL: interaction.guild.iconURL({ dynamic: true })
 })
 .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
 .setDescription(description)
-.setFooter({ text: "Poblacion City Roleplay" })
+.setFooter({ text: "Poblacion Whitelist System" })
 .setTimestamp();
 
     /* BUTTONS */

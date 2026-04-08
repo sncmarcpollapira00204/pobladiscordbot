@@ -135,7 +135,10 @@ if (interaction.customId === "vouch") {
     .replace(/🟡 PENDING WHITELIST APPLICATION/g, "")
     .replace(/🔵 PENDING ADMIN REVIEW/g, "")
     .replace(/👥 VOUCHED BY: .*/, `👥 VOUCHED BY: ${formatted}`)
-    + (vouches.length ? `\n\n🔵 PENDING ADMIN REVIEW` : `\n\n🟡 PENDING WHITELIST APPLICATION`);
+    + (vouches.length 
+      ? `\n🔵 PENDING ADMIN REVIEW` 
+      : `\n🟡 PENDING WHITELIST APPLICATION`
+    );
 
   embed.setDescription(desc);
 
