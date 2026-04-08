@@ -132,15 +132,22 @@ if (interaction.customId === "vouch") {
   const formatted = formatVouches(vouches);
 
   desc = desc
+    // REMOVE ALL OLD STATUS (IMPORTANT)
     .replace(/🟡 PENDING WHITELIST APPLICATION/g, "")
     .replace(/🔵 PENDING ADMIN REVIEW/g, "")
-    .replace(/👥 VOUCHED BY: .*/, `👥 VOUCHED BY: ${formatted}`)
-    + (vouches.length 
-      ? `\n🔵 PENDING ADMIN REVIEW` 
-      : `\n🟡 PENDING WHITELIST APPLICATION`
-    );
 
-  embed.setDescription(desc);
+    // REMOVE EXTRA NEWLINES (ANTI-SPAM FIX)
+    .replace(/\n{2,}/g, "\n")
+
+    // UPDATE VOUCH LINE
+    .replace(/👥 VOUCHED BY: .*/, `👥 VOUCHED BY: ${formatted}`);
+
+  // ADD CLEAN STATUS (ONLY ONCE)
+  desc += vouches.length
+    ? `\n🔵 PENDING ADMIN REVIEW`
+    : `\n🟡 PENDING WHITELIST APPLICATION`;
+
+    embed.setDescription(desc);
 
   await message.edit({ embeds: [embed] });
 
