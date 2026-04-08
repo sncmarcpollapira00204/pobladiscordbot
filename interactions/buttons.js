@@ -132,20 +132,20 @@ if (interaction.customId === "vouch") {
   const formatted = formatVouches(vouches);
 
   desc = desc
-    // REMOVE ALL OLD STATUS (IMPORTANT)
+    // REMOVE OLD STATUS
     .replace(/🟡 PENDING WHITELIST APPLICATION/g, "")
     .replace(/🔵 PENDING ADMIN REVIEW/g, "")
 
-    // REMOVE EXTRA NEWLINES (ANTI-SPAM FIX)
-    .replace(/\n{2,}/g, "\n")
+    // CLEAN EXTRA NEWLINES
+    .replace(/\n{3,}/g, "\n\n")
 
-    // UPDATE VOUCH LINE
-    .replace(/👥 VOUCHED BY: .*/, `👥 VOUCHED BY: ${formatted}`);
+    // UPDATE VOUCH LINE WITH SPACING
+    .replace(/👥 VOUCHED BY: .*/, `👥 VOUCHED BY: ${formatted}`)
 
-  // ADD CLEAN STATUS (ONLY ONCE)
+  // ADD CLEAN SPACING + STATUS
   desc += vouches.length
-    ? `\n🔵 PENDING ADMIN REVIEW`
-    : `\n🟡 PENDING WHITELIST APPLICATION`;
+    ? `\n\n🔵 PENDING ADMIN REVIEW`
+    : `\n\n🟡 PENDING WHITELIST APPLICATION`;
 
     embed.setDescription(desc);
 
