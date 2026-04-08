@@ -86,9 +86,9 @@ module.exports = async (interaction) => {
   const embed = EmbedBuilder.from(message.embeds[0]);
   let desc = embed.data.description || "";
 
-  /* =========================
-     VOUCH
-  ========================= */
+/* =========================
+   VOUCH
+========================= */
 if (interaction.customId === "vouch") {
 
   if (!isCitizen(interaction)) {
@@ -108,7 +108,16 @@ if (interaction.customId === "vouch") {
     return safeReply(interaction, "❌ You cannot vouch yourself.");
   }
 
-  // GET CURRENT VOUCHES
+  // 📌 EXTRACT DATA (para stable layout)
+  const nameMatch = desc.match(/IN-GAME NAME: (.*)/);
+  const steamMatch = desc.match(/STEAM LINK: (.*)/);
+  const ageMatch = desc.match(/ACCOUNT AGE: (.*)/);
+
+  const characterName = nameMatch ? nameMatch[1] : "Unknown";
+  const steam = steamMatch ? steamMatch[1] : "Unknown";
+  const accountAge = ageMatch ? ageMatch[1] : "Unknown";
+
+  // 📌 GET VOUCHES
   let vouches = [];
   const match = desc.match(/👥 VOUCHED BY: (.*)/);
 
@@ -131,23 +140,23 @@ if (interaction.customId === "vouch") {
 
   const formatted = formatVouches(vouches);
 
-  desc = desc
-    // REMOVE OLD STATUS
-    .replace(/🟡 PENDING WHITELIST APPLICATION/g, "")
-    .replace(/🔵 PENDING ADMIN REVIEW/g, "")
+// 🔥 REBUILD DESCRIPTION (NO MORE SPACING BUGS)
+  const newDesc = 
+`NEW WHITELIST APPLICATION
 
-    // CLEAN EXTRA NEWLINES
-    .replace(/\n{3,}/g, "\n\n")
+👤 APPLICANT INFORMATION:
+DISCORD USER: <@${applicantId}>
+ACCOUNT AGE: ${accountAge}
 
-    // UPDATE VOUCH LINE WITH SPACING
-    .replace(/👥 VOUCHED BY: .*/, `👥 VOUCHED BY: ${formatted}`)
+🎭 CHARACTER DETAILS:
+IN-GAME NAME: ${characterName}
+STEAM LINK: ${steam}
 
-  // ADD CLEAN SPACING + STATUS
-  desc += vouches.length
-    ? `\n\n🔵 PENDING ADMIN REVIEW`
-    : `\n\n🟡 PENDING WHITELIST APPLICATION`;
+👥 VOUCHED BY: ${formatted}
 
-    embed.setDescription(desc);
+${vouches.length ? "🔵 PENDING ADMIN REVIEW" : "🟡 PENDING WHITELIST APPLICATION"}`;
+
+  embed.setDescription(newDesc);
 
   await message.edit({ embeds: [embed] });
 
