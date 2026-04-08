@@ -8,14 +8,13 @@ const {
   TextInputStyle
 } = require("discord.js");
 
-const gangs = require("../gangRoles");
+const jobs = require("../jobRoles");
 const config = require("../config.json");
-const GANG_MODERATOR_ROLE = "1474757185568378900";
 
 const cooldown = new Map();
 const COOLDOWN_TIME = 3 * 24 * 60 * 60 * 1000;
 
-// SAFE EXECUTION WRAPPER
+// SAFE EXEC
 async function safeExecute(interaction, fn) {
   try {
     await fn();
@@ -35,34 +34,9 @@ async function safeExecute(interaction, fn) {
 module.exports = async (interaction) => {
 
   /* =========================
-     GANG SELECT → MODAL
-  ========================= */
-  if (interaction.isStringSelectMenu() && interaction.customId === "gang_select") {
-
-    const gangKey = interaction.values[0];
-
-    const modal = new ModalBuilder()
-      .setCustomId(`gang_request:${gangKey}`)
-      .setTitle("Gang Role Request");
-
-    const input = new TextInputBuilder()
-      .setCustomId("ingame_name")
-      .setLabel("IN-GAME NAME")
-      .setStyle(TextInputStyle.Short)
-      .setPlaceholder("Firstname Lastname")
-      .setRequired(true);
-
-    const row = new ActionRowBuilder().addComponents(input);
-
-    modal.addComponents(row);
-
-    return interaction.showModal(modal);
-  }
-
-  /* =========================
      UNROLE MODAL SUBMIT
   ========================= */
-  if (interaction.isModalSubmit() && interaction.customId === "unrole_modal") {
+  if (interaction.isModalSubmit() && interaction.customId === "job_unrole_modal") {
     return safeExecute(interaction, async () => {
 
       await interaction.deferReply({ flags: 64 });
@@ -76,21 +50,21 @@ module.exports = async (interaction) => {
 
       const member = interaction.member;
 
-      const currentGang = member.roles.cache.find(r =>
-        config.gangRoleIds.includes(r.id)
+      const currentJob = member.roles.cache.find(r =>
+        config.jobRoleIds.includes(r.id)
       );
 
-      // NO GANG = BLOCK
-      if (!currentGang) {
-        return interaction.editReply("❌ You don't have a gang role to remove.");
+      // NO JOB = BLOCK
+      if (!currentJob) {
+        return interaction.editReply("❌ You don't have a job role to remove.");
       }
 
-      const roleName = currentGang
-        ? `<@&${currentGang.id}>`
-        : "No Gang Role";
+      const roleName = currentJob
+        ? `<@&${currentJob.id}>`
+        : "No Job Role";
 
       const embed = new EmbedBuilder()
-        .setColor(0xff0000)
+        .setColor(0x0099ff)
         .setTitle("📤 UNROLE REQUEST")
         .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
         .addFields(
@@ -100,23 +74,23 @@ module.exports = async (interaction) => {
           { name: "COOLDOWN AGREEMENT", value: agree },
           { name: "STATUS", value: "🟡 PENDING REVIEW" }
         )
-        .setFooter({ text: `GANG_UNROLE | ${interaction.user.id}` });
+        .setFooter({ text: `JOB_UNROLE | ${interaction.user.id}` });
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setCustomId("gang_unrole_verify")
+          .setCustomId("job_unrole_verify")
           .setLabel("VERIFY")
           .setEmoji("☑️")
           .setStyle(ButtonStyle.Primary),
 
         new ButtonBuilder()
-          .setCustomId("gang_unrole_approve")
+          .setCustomId("job_unrole_approve")
           .setLabel("APPROVE")
           .setEmoji("✅")
           .setStyle(ButtonStyle.Success),
 
         new ButtonBuilder()
-          .setCustomId("gang_unrole_deny")
+          .setCustomId("job_unrole_deny")
           .setLabel("DENY")
           .setEmoji("❌")
           .setStyle(ButtonStyle.Danger)
@@ -139,11 +113,11 @@ module.exports = async (interaction) => {
   /* =========================
      UNROLE BUTTON
   ========================= */
-  if (interaction.isButton() && interaction.customId === "gang_leave") {
+  if (interaction.isButton() && interaction.customId === "job_leave") {
     return safeExecute(interaction, async () => {
 
       const modal = new ModalBuilder()
-        .setCustomId("unrole_modal")
+        .setCustomId("job_unrole_modal")
         .setTitle("Unrole Request");
 
       modal.addComponents(
@@ -171,9 +145,9 @@ module.exports = async (interaction) => {
   }
 
   /* =========================
-     GANG REQUEST
+     JOB REQUEST
   ========================= */
-  if (interaction.isModalSubmit() && interaction.customId.startsWith("gang_request:")) {
+  if (interaction.isModalSubmit() && interaction.customId.startsWith("job_request:")) {
     return safeExecute(interaction, async () => {
 
       await interaction.deferReply({ flags: 64 });
@@ -189,68 +163,68 @@ module.exports = async (interaction) => {
         }
       }
 
-      // already in gang
-      if (member.roles.cache.some(r =>
-        config.gangRoleIds.includes(r.id)
-      )) {
-        return interaction.editReply("❌ You already have a gang role.");
-      }
-
-      // has job role (BLOCK)
+      // already has job
       if (member.roles.cache.some(r =>
         config.jobRoleIds.includes(r.id)
       )) {
-        return interaction.editReply("❌ You must remove your job role before requesting a gang.");
+        return interaction.editReply("❌ You already have a job role.");
       }
 
-      const gangKey = interaction.customId.split(":")[1];
-      const gang = gangs[gangKey];
+      // has gang role (BLOCK)
+      if (member.roles.cache.some(r =>
+        config.gangRoleIds.includes(r.id)
+      )) {
+        return interaction.editReply("❌ You must leave your gang before requesting a job.");
+      }
 
-      if (!gang) {
-        return interaction.editReply("❌ Invalid gang selected.");
+      const jobKey = interaction.customId.split(":")[1];
+      const job = jobs[jobKey];
+
+      if (!job) {
+        return interaction.editReply("❌ Invalid job selected.");
       }
 
       const ingameName = interaction.fields.getTextInputValue("ingame_name");
 
       const embed = new EmbedBuilder()
-        .setColor(0xff8c00)
-        .setTitle("📄 GANG ROLE REQUEST")
+        .setColor(0x0099ff)
+        .setTitle("🏢 WHITELIST JOB REQUEST")
         .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
         .addFields(
           { name: "DISCORD USER", value: `<@${interaction.user.id}>` },
           { name: "IN-GAME NAME", value: ingameName },
-          { name: "ROLE REQUEST", value: `<@&${gang.roleId}>` },
-          { name: "PATRON/A APPROVAL", value: "❌ NOT APPROVED" },
-          { name: "STATUS", value: "🟡 WAITING FOR PATRON APPROVAL" }
+          { name: "ROLE REQUEST", value: `<@&${job.roleId}>` },
+          { name: "DIRECTOR APPROVAL", value: "❌ NOT APPROVED" },
+          { name: "STATUS", value: "🔵 WAITING FOR DIRECTOR APPROVAL" }
         )
-        .setFooter({ text: `${gang.name} | ${gang.roleId}` });
+        .setFooter({ text: `${job.name} | ${job.roleId}` });
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setCustomId("gang_verify")
+          .setCustomId("job_verify")
           .setLabel("VERIFY")
           .setEmoji("☑️")
           .setStyle(ButtonStyle.Primary),
 
         new ButtonBuilder()
-          .setCustomId("gang_approve")
+          .setCustomId("job_approve")
           .setLabel("APPROVE")
           .setEmoji("✅")
           .setStyle(ButtonStyle.Success),
 
         new ButtonBuilder()
-          .setCustomId("gang_deny")
+          .setCustomId("job_deny")
           .setLabel("DENY")
           .setEmoji("❌")
           .setStyle(ButtonStyle.Danger)
       );
 
       const channel = await interaction.client.channels
-        .fetch(config.gangRequestChannelId)
+        .fetch(config.jobRequestChannelId)
         .catch(() => null);
 
       if (!channel) {
-        return interaction.editReply("❌ Request channel not found. Contact admin.");
+        return interaction.editReply("❌ Request channel not found.");
       }
 
       await channel.send({ embeds: [embed], components: [row] });
@@ -289,19 +263,27 @@ module.exports = async (interaction) => {
           parts = footer.split("|");
         }
 
+      
     /* =========================
-       VERIFY
+       VERIFY (DIRECTOR ONLY)
     ========================= */
-    if (interaction.customId === "gang_verify") {
+    if (interaction.customId === "job_verify") {
 
-      if (!interaction.member.roles.cache.some(r =>
-        config.patronRoleIds.includes(r.id)
-      )) {
-        return interaction.reply({ content: "❌ You don't have permission.", flags: 64 });
+      const footer = embed.footer?.text;
+
+      if (!footer || !footer.includes("|")) {
+        return interaction.reply({ content: "❌ Invalid data.", flags: 64 });
+      }
+
+      const roleId = footer.split("|")[1].trim();
+      const job = Object.values(jobs).find(j => j.roleId === roleId);
+
+      if (!job || !interaction.member.roles.cache.has(job.directorRoleId)) {
+        return interaction.reply({ content: "❌ Only Director can verify.", flags: 64 });
       }
 
       const isVerified = embed.fields
-        .find(f => f.name === "PATRON/A APPROVAL")
+        .find(f => f.name === "DIRECTOR APPROVAL")
         ?.value.includes("VERIFIED");
 
       if (isVerified) {
@@ -310,7 +292,7 @@ module.exports = async (interaction) => {
 
       const newEmbed = EmbedBuilder.from(embed)
         .spliceFields(3, 1, {
-          name: "PATRON/A APPROVAL",
+          name: "DIRECTOR APPROVAL",
           value: `✅ VERIFIED BY: ${interaction.user}`
         })
         .spliceFields(4, 1, {
@@ -320,18 +302,18 @@ module.exports = async (interaction) => {
 
       const newRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setCustomId("gang_unverify")
+          .setCustomId("job_unverify")
           .setLabel("Remove Verify")
           .setStyle(ButtonStyle.Secondary),
 
         new ButtonBuilder()
-          .setCustomId("gang_approve")
+          .setCustomId("job_approve")
           .setLabel("APPROVE")
           .setEmoji("✅")
           .setStyle(ButtonStyle.Success),
 
         new ButtonBuilder()
-          .setCustomId("gang_deny")
+          .setCustomId("job_deny")
           .setLabel("DENY")
           .setEmoji("❌")
           .setStyle(ButtonStyle.Danger)
@@ -343,39 +325,33 @@ module.exports = async (interaction) => {
     }
 
     // UNVERIFY
-    if (interaction.customId === "gang_unverify") {
+    if (interaction.customId === "job_unverify") {
 
-      const approvalField = embed.fields.find(f => f.name === "PATRON/A APPROVAL");
+      const approvalField = embed.fields.find(f => f.name === "DIRECTOR APPROVAL");
 
       if (!approvalField || !approvalField.value.includes(`<@${interaction.user.id}>`)) {
         return interaction.reply({ content: "❌ Only the verifier can remove this.", flags: 64 });
       }
 
       const newEmbed = EmbedBuilder.from(embed)
-        .spliceFields(3, 1, {
-          name: "PATRON/A APPROVAL",
-          value: "❌ NOT APPROVED"
-        })
-        .spliceFields(4, 1, {
-          name: "STATUS",
-          value: "🟡 WAITING FOR PATRON APPROVAL"
-        });
+        .spliceFields(3, 1, { name: "DIRECTOR APPROVAL", value: "❌ NOT APPROVED" })
+        .spliceFields(4, 1, { name: "STATUS", value: "🔵 WAITING FOR DIRECTOR APPROVAL" });
 
       const newRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setCustomId("gang_verify")
+          .setCustomId("job_verify")
           .setLabel("VERIFY")
           .setEmoji("☑️")
           .setStyle(ButtonStyle.Primary),
 
         new ButtonBuilder()
-          .setCustomId("gang_approve")
+          .setCustomId("job_approve")
           .setLabel("APPROVE")
           .setEmoji("✅")
           .setStyle(ButtonStyle.Success),
 
         new ButtonBuilder()
-          .setCustomId("gang_deny")
+          .setCustomId("job_deny")
           .setLabel("DENY")
           .setEmoji("❌")
           .setStyle(ButtonStyle.Danger)
@@ -389,30 +365,29 @@ module.exports = async (interaction) => {
     /* =========================
        APPROVE
     ========================= */
-    if (interaction.customId === "gang_approve") {
+    if (interaction.customId === "job_approve") {
 
-    const isAdmin = config.adminRoleIds?.some(roleId =>
-      interaction.member.roles.cache.has(roleId)
-    );
+      const isAdmin = config.adminRoleIds?.some(roleId =>
+        interaction.member.roles.cache.has(roleId)
+      );
 
-    const isGangMod = interaction.member.roles.cache.has("1474757185568378900");
-
-    if (!isAdmin && !isGangMod) {
-      return interaction.reply({
-        content: "❌ You don't have permission to Approve this request.",
-        flags: 64
-      });
-    }
-
-      const verification = embed.fields.find(f => f.name === "PATRON/A APPROVAL");
-
-      if (!verification || !verification.value.includes("VERIFIED")) {
-        return interaction.reply({ content: "❌ This request is not verified yet.", flags: 64 });
+      if (!isAdmin) {
+        return interaction.reply({
+          content: "❌ You don't have permission to Approve this request.",
+          flags: 64
+        });
       }
 
-      const userField = embed.fields.find(f => f.name === "DISCORD USER");
-      const userId = userField.value.replace(/[<@!>]/g, "");
+      const verification = embed.fields.find(f => f.name === "DIRECTOR APPROVAL");
 
+      if (!verification.value.includes("VERIFIED")) {
+        return interaction.reply({
+          content: "❌ This request has not been verified yet.\n✔ A Director must verify it before admin approval.",
+          flags: 64
+        });
+      }
+
+      const userId = embed.fields[0].value.replace(/[<@!>]/g, "");
       const footer = embed.footer?.text;
 
       if (!footer || !footer.includes("|")) {
@@ -420,35 +395,26 @@ module.exports = async (interaction) => {
       }
 
       const roleId = footer.split("|")[1].trim();
-
-      const gang = Object.values(gangs).find(g => g.roleId === roleId);
-
-      if (!gang) {
-        return interaction.reply({ content: "❌ Gang not found.", flags: 64 });
-      }
+      const job = Object.values(jobs).find(j => j.roleId === roleId);
 
       const member = await interaction.guild.members.fetch(userId).catch(() => null);
 
-      if (!member) {
-        return interaction.reply({ content: "❌ User not found.", flags: 64 });
+      if (!member || !job) {
+        return interaction.reply({ content: "❌ Error finding user/job.", flags: 64 });
       }
 
-      for (const roleId of config.gangRoleIds) {
+      for (const roleId of config.jobRoleIds) {
         if (member.roles.cache.has(roleId)) {
           await member.roles.remove(roleId).catch(() => {});
         }
       }
 
-      await member.roles.add(gang.roleId).catch(() => {
-        throw new Error("Missing permission to assign role.");
-      });
+      await member.roles.add(job.roleId);
 
       let name = member.nickname || member.user.username;
       name = name.includes("|") ? name.split("|")[1].trim() : name;
 
-      await member.setNickname(`${gang.prefix} | ${name}`).catch(() => {
-        console.log("⚠️ Cannot change nickname (role hierarchy issue)");
-      });
+      await member.setNickname(`${job.prefix} | ${name}`).catch(() => {});
 
       const newEmbed = EmbedBuilder.from(embed)
         .spliceFields(4, 1, {
@@ -458,26 +424,24 @@ module.exports = async (interaction) => {
 
       await interaction.message.edit({ embeds: [newEmbed], components: [] });
 
-      return interaction.reply({ content: "✅ Role approved successfully.", flags: 64 });
+      return interaction.reply({ content: "✅ Approved.", flags: 64 });
     }
 
     /* =========================
        DENY
     ========================= */
-    if (interaction.customId === "gang_deny") {
+    if (interaction.customId === "job_deny") {
 
-      const isAdmin = config.adminRoleIds?.some(roleId =>
-        interaction.member.roles.cache.has(roleId)
-      );
+const isAdmin = config.adminRoleIds?.some(roleId =>
+  interaction.member.roles.cache.has(roleId)
+);
 
-      const isGangMod = interaction.member.roles.cache.has("1474757185568378900");
-
-      if (!isAdmin && !isGangMod) {
-        return interaction.reply({
-          content: "❌ You do not have permission to deny this request.",
-          flags: 64
-        });
-      }
+    if (!isAdmin) {
+      return interaction.reply({
+        content: "❌ You do not have permission to deny this request.",
+        flags: 64
+      });
+    }
 
       const userId = embed.fields.find(f => f.name === "DISCORD USER")?.value
         .replace(/[<@!>]/g, "")
@@ -497,20 +461,24 @@ module.exports = async (interaction) => {
 
       await interaction.message.edit({ embeds: [newEmbed], components: [] });
 
-      return interaction.reply({ content: "❌ Request denied.", flags: 64 });
+      return interaction.reply({ content: "❌ Denied.", flags: 64 });
     }
 
-    //UNROLE VERIFY
+      // UNROLE VERIFY
+      if (interaction.customId === "job_unrole_verify") {
 
-    if (interaction.customId === "gang_unrole_verify") {
+        const footer = embed.footer?.text;
 
-        const isPatron = config.patronRoleIds?.some(roleId =>
-          interaction.member.roles.cache.has(roleId)
-        );
+        if (!footer || !footer.includes("|")) {
+          return interaction.reply({ content: "❌ Invalid data.", flags: 64 });
+        }
 
-        if (!isPatron) {
+        const roleId = footer.split("|")[1].trim();
+        const job = Object.values(jobs).find(j => j.roleId === roleId);
+
+        if (!job || !interaction.member.roles.cache.has(job.directorRoleId)) {
           return interaction.reply({
-            content: "❌ Only Patron can verify this unrole request.",
+            content: "❌ Only Director can verify this unrole request.",
             flags: 64
           });
         }
@@ -529,35 +497,36 @@ module.exports = async (interaction) => {
             value: `☑️ VERIFIED BY: ${interaction.user}`
           });
 
-      const newRow = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId("gang_unrole_unverify")
-          .setLabel("Remove Verify")
-          .setStyle(ButtonStyle.Secondary),
+        const newRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId("job_unrole_unverify")
+            .setLabel("Remove Verify")
+            .setStyle(ButtonStyle.Secondary),
 
-        new ButtonBuilder()
-          .setCustomId("gang_unrole_approve")
-          .setLabel("APPROVE")
-          .setEmoji("✅")
-          .setStyle(ButtonStyle.Success),
+          new ButtonBuilder()
+            .setCustomId("job_unrole_approve")
+            .setLabel("APPROVE")
+            .setEmoji("✅")
+            .setStyle(ButtonStyle.Success),
 
-        new ButtonBuilder()
-          .setCustomId("gang_unrole_deny")
-          .setLabel("DENY")
-          .setEmoji("❌")
-          .setStyle(ButtonStyle.Danger)
-      );
+          new ButtonBuilder()
+            .setCustomId("job_unrole_deny")
+            .setLabel("DENY")
+            .setEmoji("❌")
+            .setStyle(ButtonStyle.Danger)
+        );
 
         await interaction.message.edit({ embeds: [newEmbed], components: [newRow] });
 
         return interaction.reply({ content: "✅ Verified.", flags: 64 });
       }
 
+    
     /* =========================
        UNROLE APPROVE
     ========================= */
-    if (interaction.customId === "gang_unrole_approve") {
-
+    if (interaction.customId === "job_unrole_approve") {
+      
       const statusField = embed.fields.find(f => f.name === "STATUS");
 
       if (!statusField || !statusField.value.includes("VERIFIED")) {
@@ -571,9 +540,7 @@ module.exports = async (interaction) => {
         interaction.member.roles.cache.has(roleId)
       );
 
-      const isGangMod = interaction.member.roles.cache.has("1474757185568378900");
-
-      if (!isAdmin && !isGangMod) {
+      if (!isAdmin) {
         return interaction.reply({
           content: "❌ You need Administrator permission to perform this action.",
           flags: 64
@@ -592,7 +559,7 @@ module.exports = async (interaction) => {
         return interaction.reply({ content: "❌ User not found.", flags: 64 });
       }
 
-      for (const roleId of config.gangRoleIds) {
+      for (const roleId of config.jobRoleIds) {
         if (member.roles.cache.has(roleId)) {
           await member.roles.remove(roleId).catch(() => {});
         }
@@ -601,12 +568,12 @@ module.exports = async (interaction) => {
       let name = member.nickname || member.user.username;
       name = name.includes("|") ? name.split("|")[1].trim() : name;
 
-      await member.setNickname(name).catch(() => {
-        console.log("⚠️ Cannot change nickname");
-      });
+      await member.setNickname(name).catch(() => {});
 
       const cooldownEnd = Math.floor((Date.now() + COOLDOWN_TIME) / 1000);
       cooldown.set(userId, cooldownEnd * 1000);
+
+      const userIdClean = embed.footer?.text?.split("|")[1].trim();
 
       const ingame = embed.fields.find(f => f.name === "IN-GAME NAME")?.value || "N/A";
       const role = embed.fields.find(f => f.name === "CURRENT ROLE")?.value || "N/A";
@@ -614,7 +581,7 @@ module.exports = async (interaction) => {
       const newEmbed = EmbedBuilder.from(embed);
 
       newEmbed.setFields(
-        { name: "DISCORD USER", value: `<@${userId}>` },
+        { name: "DISCORD USER", value: `<@${userIdClean}>` },
         { name: "IN-GAME NAME", value: ingame },
         { name: "CURRENT ROLE", value: role },
         { name: "COOLDOWN AGREEMENT", value: `⏳ <t:${cooldownEnd}:F>` },
@@ -626,7 +593,8 @@ module.exports = async (interaction) => {
       return interaction.reply({ content: "✅ Unrole approved.", flags: 64 });
     }
 
-    if (interaction.customId === "gang_unrole_unverify") {
+      // ✅ DITO MO ILALAGAY
+      if (interaction.customId === "job_unrole_unverify") {
 
         const statusField = embed.fields.find(f => f.name === "STATUS");
 
@@ -645,17 +613,17 @@ module.exports = async (interaction) => {
 
         const newRow = new ActionRowBuilder().addComponents(
           new ButtonBuilder()
-            .setCustomId("gang_unrole_verify")
+            .setCustomId("job_unrole_verify")
             .setLabel("VERIFY")
             .setStyle(ButtonStyle.Primary),
 
           new ButtonBuilder()
-            .setCustomId("gang_unrole_approve")
+            .setCustomId("job_unrole_approve")
             .setLabel("APPROVE")
             .setStyle(ButtonStyle.Success),
 
           new ButtonBuilder()
-            .setCustomId("gang_unrole_deny")
+            .setCustomId("job_unrole_deny")
             .setLabel("DENY")
             .setStyle(ButtonStyle.Danger)
         );
@@ -664,24 +632,23 @@ module.exports = async (interaction) => {
 
         return interaction.reply({ content: "⚠️ Verification removed.", flags: 64 });
       }
+
+
     /* =========================
        UNROLE DENY
     ========================= */
-    if (interaction.customId === "gang_unrole_deny") {
+    if (interaction.customId === "job_unrole_deny") {
 
       const isAdmin = config.adminRoleIds?.some(roleId =>
         interaction.member.roles.cache.has(roleId)
       );
 
-      const isGangMod = interaction.member.roles.cache.has("1474757185568378900");
-
-      if (!isAdmin && !isGangMod) {
+      if (!isAdmin) {
         return interaction.reply({
           content: "❌ You don't have permission to Deny this Unrole Request.",
           flags: 64
         });
       }
-
       const userId = embed.footer?.text?.split("|")[1].trim();
 
       const ingame = embed.fields.find(f => f.name === "IN-GAME NAME")?.value || "N/A";

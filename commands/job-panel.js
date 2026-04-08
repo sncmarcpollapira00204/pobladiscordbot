@@ -7,12 +7,12 @@ const {
   ButtonStyle
 } = require("discord.js");
 
-const gangs = require("../gangRoles");
+const jobs = require("../jobRoles");
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("gang-panel")
-    .setDescription("Send gang role request panel"),
+    .setName("job-panel")
+    .setDescription("Send job role request panel"),
 
   async execute(interaction) {
 
@@ -23,69 +23,79 @@ module.exports = {
       });
     }
 
+    // =========================
+    // EMBED (UNCHANGED DESIGN)
+    // =========================
     const embed = new EmbedBuilder()
       .setColor(0xff0000)
       .setAuthor({
-        name: "GANG ROLE REQUEST",
+        name: "WHITELISTED JOB ROLE REQUEST",
         iconURL: interaction.guild.iconURL({ dynamic: true })
       })
       .setDescription(
         "**Welcome to Poblacion City Roleplay**\n\n" +
-        "Select your gang below to submit a role request.\n\n" +
+        "Select your job below to submit a whitelist request.\n\n" +
         "⚠️ **Rules:**\n" +
-        "• Must be verified by Directors/Patrons\n" +
+        "• Must be verified by Directors\n" +
         "• Admin approval required\n" +
-        "• One gang only\n" +
+        "• One job only\n" +
         "• Invalid requests will be denied"
       )
       .setThumbnail(interaction.guild.iconURL({ dynamic: true }))
-
-      // ✅ IBINALIK IMAGE MO
       .setImage(
-        "https://cdn.discordapp.com/attachments/1466355570805313719/1466783941867339888/gif_tag_3.gif?ex=69d10eff&is=69cfbd7f&hm=cb7260fac014cc0e2128d919d99ea46e6c58246fb6a7f435a58d92ae6623a7bc"
+        "https://cdn.discordapp.com/attachments/1446053243221446667/1489807559228526622/jobs-ezgif.com-video-to-gif-converter.gif"
       )
-
       .setFooter({
         text: "Poblacion City Roleplay",
         iconURL: "https://cdn.discordapp.com/attachments/1466355570805313719/1466355571706826842/Poblagif1.gif"
       });
 
-    // ✅ FIXED EMOJI KEYS (IMPORTANT)
-    const gangEmojis = {
-      DCG: "🔵",
-      FOUR_K: "⚫",
-      FT: "🟡",
-      RM: "🔷"
+    // =========================
+    // EMOJIS (SYNCED TO YOUR JOBS)
+    // =========================
+    const jobEmojis = {
+      POLICE: "🚓",
+      EMS: "🚑",
+      MECHANIC: "🔧"
     };
 
-    const options = Object.entries(gangs).map(([key, gang]) => ({
-      label: gang.name,
+    // =========================
+    // DROPDOWN OPTIONS
+    // =========================
+    const options = Object.entries(jobs).map(([key, job]) => ({
+      label: job.name,
       value: key,
-      emoji: gangEmojis[key] || "⚪"
+      emoji: jobEmojis[key] || "⚪"
     }));
 
     const select = new StringSelectMenuBuilder()
-      .setCustomId("gang_select")
-      .setPlaceholder("Select your Gang Role here...")
+      .setCustomId("job_select")
+      .setPlaceholder("Select your Job Role here...")
       .addOptions(options);
 
     const dropdownRow = new ActionRowBuilder().addComponents(select);
 
+    // =========================
+    // UNROLE BUTTON
+    // =========================
     const leaveButton = new ButtonBuilder()
-      .setCustomId("gang_leave")
+      .setCustomId("job_leave")
       .setLabel("Unrole Request")
       .setStyle(ButtonStyle.Danger)
       .setEmoji("🚪");
 
     const buttonRow = new ActionRowBuilder().addComponents(leaveButton);
 
+    // =========================
+    // SEND PANEL
+    // =========================
     await interaction.channel.send({
       embeds: [embed],
       components: [dropdownRow, buttonRow]
     });
 
     return interaction.reply({
-      content: "✅ Gang panel sent to the channel.",
+      content: "✅ Job panel sent to the channel.",
       flags: 64
     });
   }

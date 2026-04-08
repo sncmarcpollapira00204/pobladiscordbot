@@ -17,8 +17,14 @@ const {
 =============================== */
 
 const namechangeHandler = require("./interactions/namechange");
+
+// GANG
 const gangSelectHandler = require("./interactions/gangSelect");
 const gangRequestHandler = require("./interactions/gangRequest");
+
+// ✅ JOB (ADDED ONLY — walang binago sa iba)
+const jobSelectHandler = require("./interactions/jobSelect");
+const jobRequestHandler = require("./interactions/jobRequest");
 
 /* ===============================
    CLIENT SETUP
@@ -42,12 +48,14 @@ process.on("uncaughtException", console.error);
 
 const buttonHandlers = [
   gangRequestHandler, // 🔥 PRIORITY FIRST
+  jobRequestHandler,  // ✅ ADD (job buttons)
   require("./interactions/buttons"),
   require("./interactions/noVoucherButtons")
 ];
 
 const modalHandlers = [
   gangRequestHandler, // 🔥 PRIORITY FIRST
+  jobRequestHandler,  // ✅ ADD (job modals)
   require("./interactions/modals"),
   require("./interactions/noVoucherModal"),
   require("./interactions/revokeModal")
@@ -104,10 +112,18 @@ client.on(Events.InteractionCreate, async interaction => {
   try {
 
     /* =========================
-       SELECT MENU (GANG)
+       SELECT MENU
     ========================= */
     if (interaction.isStringSelectMenu()) {
+
+      // GANG
       await gangSelectHandler(interaction);
+      if (interaction.replied || interaction.deferred) return;
+
+      // ✅ JOB
+      await jobSelectHandler(interaction);
+      if (interaction.replied || interaction.deferred) return;
+
       return;
     }
 
