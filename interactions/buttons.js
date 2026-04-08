@@ -49,7 +49,7 @@ module.exports = async (interaction) => {
   if (!interaction.isButton()) return;
 
   /* =========================
-     OPEN MODAL (PANEL)
+     OPEN MODAL
   ========================= */
   if (interaction.customId === "open_whitelist_modal") {
 
@@ -86,62 +86,58 @@ module.exports = async (interaction) => {
   const embed = EmbedBuilder.from(message.embeds[0]);
   let desc = embed.data.description || "";
 
-/* =========================
-   VOUCH
-========================= */
-if (interaction.customId === "vouch") {
+  /* =========================
+     VOUCH
+  ========================= */
+  if (interaction.customId === "vouch") {
 
-  if (!isCitizen(interaction)) {
-    return safeReply(interaction, "❌ Only **Citizens** can vouch.");
-  }
+    if (!isCitizen(interaction)) {
+      return safeReply(interaction, "❌ Only **Citizens** can vouch.");
+    }
 
-  if (!desc.includes("NEW WHITELIST APPLICATION")) {
-    return safeReply(interaction, "❌ This is not an application.");
-  }
+    if (!desc.includes("NEW WHITELIST APPLICATION")) {
+      return safeReply(interaction, "❌ This is not an application.");
+    }
 
-  const userMatch = desc.match(/<@(\d+)>/);
-  if (!userMatch) return safeReply(interaction, "❌ User not found.");
+    const userMatch = desc.match(/<@(\d+)>/);
+    if (!userMatch) return safeReply(interaction, "❌ User not found.");
 
-  const applicantId = userMatch[1];
+    const applicantId = userMatch[1];
 
-  if (interaction.user.id === applicantId) {
-    return safeReply(interaction, "❌ You cannot vouch yourself.");
-  }
+    if (interaction.user.id === applicantId) {
+      return safeReply(interaction, "❌ You cannot vouch yourself.");
+    }
 
-  // 📌 EXTRACT DATA (para stable layout)
-  const nameMatch = desc.match(/IN-GAME NAME: (.*)/);
-  const steamMatch = desc.match(/STEAM LINK: (.*)/);
-  const ageMatch = desc.match(/ACCOUNT AGE: (.*)/);
+    const nameMatch = desc.match(/IN-GAME NAME: (.*)/);
+    const steamMatch = desc.match(/\((https:\/\/steamcommunity\.com\/.*?)\)/);
+    const ageMatch = desc.match(/ACCOUNT AGE: (.*)/);
 
-  const characterName = nameMatch ? nameMatch[1] : "Unknown";
-  const steam = steamMatch ? steamMatch[1] : "Unknown";
-  const accountAge = ageMatch ? ageMatch[1] : "Unknown";
+    const characterName = nameMatch ? nameMatch[1] : "Unknown";
+    const steam = steamMatch ? steamMatch[1] : "Unknown";
+    const accountAge = ageMatch ? ageMatch[1] : "Unknown";
 
-  // 📌 GET VOUCHES
-  let vouches = [];
-  const match = desc.match(/👥 VOUCHED BY: (.*)/);
+    let vouches = [];
+    const match = desc.match(/👥 VOUCHED BY: (.*)/);
 
-  if (match && match[1] !== "None") {
-    vouches = match[1].split(/,\s|\n/).filter(v => v);
-  }
+    if (match && match[1] !== "None") {
+      vouches = match[1].split(/,\s|\n/).filter(v => v);
+    }
 
-  const voucher = `<@${interaction.user.id}>`;
+    const voucher = `<@${interaction.user.id}>`;
 
-  let action;
+    let action;
 
-  // 🔁 TOGGLE
-  if (vouches.includes(voucher)) {
-    vouches = vouches.filter(v => v !== voucher);
-    action = "removed";
-  } else {
-    vouches.push(voucher);
-    action = "added";
-  }
+    if (vouches.includes(voucher)) {
+      vouches = vouches.filter(v => v !== voucher);
+      action = "removed";
+    } else {
+      vouches.push(voucher);
+      action = "added";
+    }
 
-  const formatted = formatVouches(vouches);
+    const formatted = formatVouches(vouches);
 
-// 🔥 REBUILD DESCRIPTION (NO MORE SPACING BUGS)
-  const newDesc = 
+    const newDesc = 
 `NEW WHITELIST APPLICATION
 
 👤 APPLICANT INFORMATION:
@@ -150,24 +146,24 @@ ACCOUNT AGE: ${accountAge}
 
 🎭 CHARACTER DETAILS:
 IN-GAME NAME: ${characterName}
-STEAM LINK: ${steam}
+STEAM LINK: [Steam Profile](${steam})
 
 👥 VOUCHED BY: ${formatted}
 
 ${vouches.length ? "🔵 PENDING ADMIN REVIEW" : "🟡 PENDING WHITELIST APPLICATION"}`;
 
-  embed.setDescription(newDesc);
+    embed.setDescription(newDesc);
 
-  await message.edit({ embeds: [embed] });
+    await message.edit({ embeds: [embed] });
 
-  return safeReply(
-    interaction,
-    action === "added" ? "✅ Vouch added." : "❌ Vouch removed."
-  );
-}
+    return safeReply(
+      interaction,
+      action === "added" ? "✅ Vouch added." : "❌ Vouch removed."
+    );
+  }
 
   /* =========================
-     APPROVE
+     APPROVE (FIXED)
   ========================= */
   if (interaction.customId === "approve") {
 
@@ -177,6 +173,35 @@ ${vouches.length ? "🔵 PENDING ADMIN REVIEW" : "🟡 PENDING WHITELIST APPLICA
 
     if (!desc.includes("NEW WHITELIST APPLICATION")) {
       return safeReply(interaction, "❌ This is not an application.");
+    }
+
+    const userMatch = desc.match(/<@(\d+)>/);
+    if (!userMatch) return safeReply(interaction, "❌ User not found.");
+
+    const userId = userMatch[1];
+    const member = await interaction.guild.members.fetch(userId).catch(() => null);
+
+    if (!member) {
+      return safeReply(interaction, "❌ Member not found.");
+    }
+
+    const nameMatch = desc.match(/IN-GAME NAME: (.*)/);
+    const characterName = nameMatch ? nameMatch[1] : null;
+
+    // GIVE ROLE
+    try {
+      await member.roles.add(config.citizenRoleId);
+    } catch (err) {
+      console.error("ROLE ERROR:", err);
+    }
+
+    // CHANGE NAME
+    if (characterName) {
+      try {
+        await member.setNickname(characterName);
+      } catch (err) {
+        console.error("NICKNAME ERROR:", err);
+      }
     }
 
     desc = desc.replace(
@@ -191,11 +216,11 @@ ${vouches.length ? "🔵 PENDING ADMIN REVIEW" : "🟡 PENDING WHITELIST APPLICA
       components: []
     });
 
-    return safeReply(interaction, "✅ Approved.");
+    return safeReply(interaction, "✅ Approved + role + name updated.");
   }
 
   /* =========================
-     DENY
+     DENY (FIXED)
   ========================= */
   if (interaction.customId === "deny") {
 
@@ -209,12 +234,12 @@ ${vouches.length ? "🔵 PENDING ADMIN REVIEW" : "🟡 PENDING WHITELIST APPLICA
 
     const modal = new ModalBuilder()
       .setCustomId(`deny_reason_modal:${message.id}`)
-      .setCustomId("deny_reason")
+      .setTitle("Deny Reason");
 
     modal.addComponents(
       new ActionRowBuilder().addComponents(
         new TextInputBuilder()
-          .setCustomId("reason")
+          .setCustomId("deny_reason")
           .setLabel("Reason")
           .setStyle(TextInputStyle.Paragraph)
           .setRequired(true)

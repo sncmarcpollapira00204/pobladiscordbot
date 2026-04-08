@@ -5,34 +5,29 @@ module.exports = async (message) => {
     if (!message.embeds.length) return;
 
     const embed = message.embeds[0];
-    const fields = embed.data.fields || [];
+    const desc = embed.data.description || "";
 
-    const userField = fields.find(f => f.value?.includes("<@"));
-    const match = userField?.value.match(/<@(\d+)>/);
+    // USER ID
+    const userMatch = desc.match(/<@(\d+)>/);
+    if (!userMatch) return;
 
-    if (!match) return;
+    const userId = userMatch[1];
 
-    const userId = match[1];
+    // CHARACTER NAME
+    const nameMatch = desc.match(/IN-GAME NAME: (.*)/);
+    const character = nameMatch ? nameMatch[1] : "Unknown";
 
-    const charField = fields.find(f =>
-      f.value?.toLowerCase().includes("character name")
-    );
+    // STEAM LINK
+    const steamMatch = desc.match(/\((https:\/\/steamcommunity\.com\/.*?)\)/);
+    const steam = steamMatch ? steamMatch[1] : "Unknown";
 
-    const character =
-      charField?.value.split("Character Name:")[1]?.split("\n")[0]?.trim() || "Unknown";
+    // VOUCHES
+    const vouchMatch = desc.match(/👥 VOUCHED BY: ([\s\S]*?)\n\n/);
+    let vouchers = "None";
 
-    const steamField = fields.find(f =>
-      f.value?.includes("steamcommunity.com")
-    );
-
-    const steam =
-      steamField?.value.match(/\((.*?)\)/)?.[1] || "Unknown";
-
-    const vouchField = fields.find(f =>
-      f.name?.toUpperCase().includes("VOUCHED BY")
-    );
-
-    const vouchers = vouchField?.value || "None";
+    if (vouchMatch && vouchMatch[1].trim() !== "None") {
+      vouchers = vouchMatch[1].trim();
+    }
 
     await pool.query(
       `INSERT INTO whitelist (discord_id, character_name, steam_profile, vouchers)
