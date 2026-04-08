@@ -15,20 +15,23 @@ const COOLDOWN_TIME = 1 * 60 * 1000;
 module.exports = async (interaction) => {
   if (!interaction.isModalSubmit()) return;
 
-function formatVouches(vouches) {
-  if (!vouches.length) return "None";
+  // ✅ GLOBAL DEFER (FIXES ERROR)
+  await interaction.deferReply({ flags: 64 });
 
-  let result = "";
-  for (let i = 0; i < vouches.length; i++) {
-    if (i % 2 === 0) {
-      result += vouches[i];
-    } else {
-      result += " , " + vouches[i] + "\n";
+  function formatVouches(vouches) {
+    if (!vouches.length) return "None";
+
+    let result = "";
+    for (let i = 0; i < vouches.length; i++) {
+      if (i % 2 === 0) {
+        result += vouches[i];
+      } else {
+        result += " , " + vouches[i] + "\n";
+      }
     }
-  }
 
-  return result.trim();
-}
+    return result.trim();
+  }
 
   /* =========================
      WHITELIST SUBMIT
@@ -37,10 +40,8 @@ function formatVouches(vouches) {
   if (interaction.customId === "whitelist_submit") {
 
     if (interaction.member.roles.cache.has(config.citizenRoleId)) {
-    return interaction.editReply("❌ You already have the **Citizen** role. No need to apply.");
-  }
-
-    await interaction.deferReply({ flags: 64 }); // prevent timeout
+      return interaction.editReply("❌ You already have the **Citizen** role. No need to apply.");
+    }
 
     const characterName = interaction.fields.getTextInputValue("character_name");
     const steamProfile = interaction.fields.getTextInputValue("steam_profile");
@@ -57,7 +58,6 @@ function formatVouches(vouches) {
     /* SAVE TO DATABASE ✅ */
 
     try {
-
       await pool.query(
         `INSERT INTO whitelist (discord_id, character_name, steam_profile, vouchers)
          VALUES ($1,$2,$3,$4)
@@ -72,7 +72,6 @@ function formatVouches(vouches) {
           "None"
         ]
       );
-
     } catch (err) {
       console.error("DB SAVE ERROR:", err);
       return interaction.editReply("❌ Failed to save application.");
@@ -92,19 +91,14 @@ function formatVouches(vouches) {
     const diffMonths = Math.floor((diffDays % 365) / 30);
     const accountAge = `${diffYears} year(s), ${diffMonths} month(s)`;
 
-    const SPACE = "\u200B";
+    /* EMBED */
 
-
-
-/* NEW WHITELIST EMBED DESIGN */
-
-const description = 
+    const description = 
 `NEW WHITELIST APPLICATION
 
 👤 APPLICANT INFORMATION:
 DISCORD USER: ${interaction.user}
 ACCOUNT AGE: ${accountAge}
-
 
 🎭 CHARACTER DETAILS:
 IN-GAME NAME: ${characterName}
@@ -114,18 +108,16 @@ STEAM LINK: [Steam Profile](${steamProfile})
 
 🟡 PENDING WHITELIST APPLICATION`;
 
-const embed = new EmbedBuilder()
-.setColor(0xff8c00)
-.setAuthor({
-name: "POBLACION ROLEPLAY",
-iconURL: interaction.guild.iconURL({ dynamic: true })
-})
-.setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
-.setDescription(description)
-.setFooter({ text: "Poblacion Whitelist System" })
-.setTimestamp();
-
-    /* BUTTONS */
+    const embed = new EmbedBuilder()
+      .setColor(0xff8c00)
+      .setAuthor({
+        name: "POBLACION ROLEPLAY",
+        iconURL: interaction.guild.iconURL({ dynamic: true })
+      })
+      .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
+      .setDescription(description)
+      .setFooter({ text: "Poblacion Whitelist System" })
+      .setTimestamp();
 
     const buttons = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId("vouch").setLabel("VOUCH").setEmoji("🖐️").setStyle(ButtonStyle.Primary),
@@ -148,7 +140,7 @@ iconURL: interaction.guild.iconURL({ dynamic: true })
   }
 
   /* =========================
-     DENY MODAL (UNCHANGED)
+     DENY MODAL (FIXED)
   ========================= */
 
   if (interaction.customId.startsWith("deny_reason_modal:")) {
@@ -157,50 +149,28 @@ iconURL: interaction.guild.iconURL({ dynamic: true })
     const messageId = interaction.customId.split(":")[1];
 
     const channel = interaction.client.channels.cache.get(config.whitelistChannelId);
-    if (!channel) return;
+    if (!channel) return interaction.editReply("❌ Channel not found.");
 
     const message = await channel.messages.fetch(messageId).catch(() => null);
-
     if (!message || !message.embeds.length) {
-      return interaction.reply({
-        content: "❌ Application message not found.",
-        flags: 64
-      });
+      return interaction.editReply("❌ Application message not found.");
     }
 
     const embed = EmbedBuilder.from(message.embeds[0]);
-    const fields = embed.data.fields;
-
-    const statusField = fields.find(field =>
-      field.value?.includes("PENDING REVIEW")
-    );
-
-    if (!statusField) {
-      return interaction.reply({
-        content: "❌ This application can no longer be denied.",
-        flags: 64
-      });
-    }
-
-    statusField.value = "❌ **DENIED**";
-
     const oldDesc = embed.data.description;
 
-    embed.setDescription(
-      oldDesc + `
-
-    ❌ DENIED BY: ${interaction.user}
-    📄 REASON: ${reason}`
+    const newDesc = oldDesc.replace(
+      /🟡 PENDING WHITELIST APPLICATION|🔵 PENDING ADMIN REVIEW/,
+      `❌ DENIED BY: ${interaction.user}\n📄 REASON: ${reason}`
     );
+
+    embed.setDescription(newDesc);
 
     await message.edit({
       embeds: [embed],
       components: []
     });
 
-    return interaction.reply({
-      content: "❌ Application denied.",
-      flags: 64
-    });
+    return interaction.editReply("❌ Application denied.");
   }
 };

@@ -208,8 +208,8 @@ ${vouches.length ? "🔵 PENDING ADMIN REVIEW" : "🟡 PENDING WHITELIST APPLICA
     }
 
     const modal = new ModalBuilder()
-      .setCustomId(`deny_modal:${message.id}`)
-      .setTitle("Deny Reason");
+      .setCustomId(`deny_reason_modal:${message.id}`)
+      .setCustomId("deny_reason")
 
     modal.addComponents(
       new ActionRowBuilder().addComponents(
