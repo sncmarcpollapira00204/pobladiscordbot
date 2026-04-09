@@ -14,6 +14,9 @@ const {
    HANDLERS (ONLY WHAT YOU NEED)
 =============================== */
 
+const whitelistButtons = require("./interactions/buttons");
+const whitelistModals = require("./interactions/modals");
+
 const namechangeHandler = require("./interactions/namechange");
 
 // ✅ ONLY USE MERGED SYSTEM
@@ -77,6 +80,13 @@ client.once(Events.ClientReady, async () => {
 =============================== */
 
 client.on(Events.InteractionCreate, async (interaction) => {
+
+  console.log(
+  "INTERACTION:",
+  interaction.type,
+  interaction.customId || interaction.commandName
+);
+
   try {
 
     /* ===== SELECT ===== */
@@ -100,14 +110,23 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 
     /* ===== BUTTON + MODAL (MERGED SYSTEM ONLY) ===== */
-    if (interaction.isButton() || interaction.isModalSubmit()) {
+    if (interaction.isButton()) {
 
-      // name change priority
+      await whitelistButtons(interaction);
+      if (interaction.replied || interaction.deferred) return;
+
       await namechangeHandler(interaction);
       if (interaction.replied || interaction.deferred) return;
 
-      // ✅ ONE HANDLER ONLY
       await requestHandler(interaction);
+      return;
+    }
+
+    if (interaction.isModalSubmit()) {
+
+      await whitelistModals(interaction);
+      if (interaction.replied || interaction.deferred) return;
+
       return;
     }
 

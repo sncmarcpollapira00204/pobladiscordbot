@@ -15,6 +15,9 @@ const COOLDOWN_TIME = 1 * 60 * 1000;
 module.exports = async (interaction) => {
   if (!interaction.isModalSubmit()) return;
 
+  // ✅ GLOBAL DEFER (FIXES ERROR)
+  await interaction.deferReply({ ephemeral: true });
+
   function formatVouches(vouches) {
     if (!vouches.length) return "None";
 
@@ -36,8 +39,6 @@ module.exports = async (interaction) => {
 
   if (interaction.customId === "whitelist_submit") {
 
-    await interaction.deferReply({ flags: 64 }); // ✅ FIX
-
     if (interaction.member.roles.cache.has(config.citizenRoleId)) {
       return interaction.editReply("❌ You already have the **Citizen** role. No need to apply.");
     }
@@ -45,12 +46,16 @@ module.exports = async (interaction) => {
     const characterName = interaction.fields.getTextInputValue("character_name");
     const steamProfile = interaction.fields.getTextInputValue("steam_profile");
 
+    /* VALIDATION */
+
     const isValidSteam =
       /^https:\/\/steamcommunity\.com\/(id|profiles)\/.+/.test(steamProfile);
 
     if (!isValidSteam) {
       return interaction.editReply("❌ Invalid Steam profile link.");
     }
+
+    /* SAVE TO DATABASE ✅ */
 
     try {
       await pool.query(
@@ -72,15 +77,21 @@ module.exports = async (interaction) => {
       return interaction.editReply("❌ Failed to save application.");
     }
 
+    /* COOLDOWN */
+
     const userId = interaction.user.id;
     cooldowns.set(userId, Date.now());
     setTimeout(() => cooldowns.delete(userId), COOLDOWN_TIME);
+
+    /* ACCOUNT AGE */
 
     const createdAt = interaction.user.createdAt;
     const diffDays = Math.floor((Date.now() - createdAt) / (1000 * 60 * 60 * 24));
     const diffYears = Math.floor(diffDays / 365);
     const diffMonths = Math.floor((diffDays % 365) / 30);
     const accountAge = `${diffYears} year(s), ${diffMonths} month(s)`;
+
+    /* EMBED */
 
     const description = 
 `NEW WHITELIST APPLICATION
@@ -134,13 +145,11 @@ STEAM LINK: [Steam Profile](${steamProfile})
 
   if (interaction.customId.startsWith("deny_reason_modal:")) {
 
-    await interaction.deferReply({ flags: 64 }); // ✅ FIX
-
     const reason = interaction.fields.getTextInputValue("deny_reason");
     const messageId = interaction.customId.split(":")[1];
 
     const channel = interaction.client.channels.cache.get(config.whitelistChannelId);
-    if (!channel) return interaction.editReply("❌ Channel not found."); // ✅ FIX (removed stray "v")
+    if (!channel) return interaction.editReply("❌ Channel not found.");
 
     const message = await channel.messages.fetch(messageId).catch(() => null);
     if (!message || !message.embeds.length) {
