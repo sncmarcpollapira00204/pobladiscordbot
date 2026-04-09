@@ -33,6 +33,8 @@ const safeReply = async (interaction, content) => {
 module.exports = async (interaction) => {
   if (!interaction.isButton()) return;
 
+  await interaction.deferReply({ flags: 64 });
+
   /* =========================
      OPEN MODAL
   ========================= */
