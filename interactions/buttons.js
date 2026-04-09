@@ -21,22 +21,6 @@ const isAdmin = (interaction) => {
   );
 };
 
-/* FORMAT VOUCHES */
-function formatVouches(vouches) {
-  if (!vouches.length) return "None";
-
-  let result = "";
-  for (let i = 0; i < vouches.length; i++) {
-    if (i % 2 === 0) {
-      result += vouches[i];
-    } else {
-      result += " , " + vouches[i] + "\n";
-    }
-  }
-
-  return result.trim();
-}
-
 /* SAFE REPLY */
 const safeReply = async (interaction, content) => {
   if (interaction.replied || interaction.deferred) {
@@ -87,79 +71,91 @@ module.exports = async (interaction) => {
   const embed = EmbedBuilder.from(message.embeds[0]);
   let desc = embed.data.description || "";
 
-/* =========================
-   VOUCH (DB BASED)
-========================= */
-if (interaction.customId === "vouch") {
+  // ✅ DETECT FORMAT
+  const isOldFormat = embed.data.fields && embed.data.fields.length > 0;
+  const isNewFormat = desc.includes("NEW WHITELIST APPLICATION");
 
-  if (!isCitizen(interaction)) {
-    return safeReply(interaction, "❌ Only **Citizens** can vouch.");
+  // ✅ GET USER ID
+  let userId = null;
+
+  if (isNewFormat) {
+    const match = desc.match(/<@(\d+)>/);
+    if (match) userId = match[1];
   }
 
-  if (!desc.includes("NEW WHITELIST APPLICATION")) {
-    return safeReply(interaction, "❌ This is not an application.");
+  if (isOldFormat) {
+    const userField = embed.data.fields.find(f => f.value?.includes("<@"));
+    const match = userField?.value.match(/<@(\d+)>/);
+    if (match) userId = match[1];
   }
 
-  const userMatch = desc.match(/<@(\d+)>/);
-  if (!userMatch) return safeReply(interaction, "❌ User not found.");
-
-  const applicantId = userMatch[1];
-
-  if (interaction.user.id === applicantId) {
-    return safeReply(interaction, "❌ You cannot vouch yourself.");
+  if (!userId) {
+    return safeReply(interaction, "❌ User not found.");
   }
 
-  // ✅ GET DATA FROM DB
-  const result = await pool.query(
-    "SELECT * FROM whitelist WHERE discord_id = $1",
-    [applicantId]
-  );
+  /* =========================
+     VOUCH
+  ========================= */
+  if (interaction.customId === "vouch") {
 
-  if (result.rows.length === 0) {
-    return safeReply(interaction, "❌ No database record found.");
-  }
+    if (!isCitizen(interaction)) {
+      return safeReply(interaction, "❌ Only **Citizens** can vouch.");
+    }
 
-  let data = result.rows[0];
+    if (!isNewFormat) {
+      return safeReply(interaction, "❌ Old applications cannot use vouch.");
+    }
 
-  // ✅ PARSE VOUCHES FROM DB
-  let vouches = data.vouchers && data.vouchers !== "None"
-    ? data.vouchers.split(", ")
-    : [];
+    if (interaction.user.id === userId) {
+      return safeReply(interaction, "❌ You cannot vouch yourself.");
+    }
 
-  const voucher = `<@${interaction.user.id}>`;
-  let action;
+    const result = await pool.query(
+      "SELECT * FROM whitelist WHERE discord_id = $1",
+      [userId]
+    );
 
-  // 🔁 TOGGLE
-  if (vouches.includes(voucher)) {
-    vouches = vouches.filter(v => v !== voucher);
-    action = "removed";
-  } else {
-    vouches.push(voucher);
-    action = "added";
-  }
+    if (result.rows.length === 0) {
+      return safeReply(interaction, "❌ No database record found.");
+    }
 
-  // ✅ SAVE TO DB
-  const updatedVouches = vouches.length ? vouches.join(", ") : "None";
+    let data = result.rows[0];
 
-  await pool.query(
-    "UPDATE whitelist SET vouchers = $1 WHERE discord_id = $2",
-    [updatedVouches, applicantId]
-  );
+    let vouches = data.vouchers && data.vouchers !== "None"
+      ? data.vouchers.split(", ")
+      : [];
 
-  // ✅ REBUILD EMBED (same design, but from DB)
-  const nameMatch = desc.match(/IN-GAME NAME: (.*)/);
-  const steamMatch = desc.match(/\((https:\/\/steamcommunity\.com\/.*?)\)/);
-  const ageMatch = desc.match(/ACCOUNT AGE: (.*)/);
+    const voucher = `<@${interaction.user.id}>`;
+    let action;
 
-  const characterName = nameMatch ? nameMatch[1] : "Unknown";
-  const steam = steamMatch ? steamMatch[1] : "Unknown";
-  const accountAge = ageMatch ? ageMatch[1] : "Unknown";
+    if (vouches.includes(voucher)) {
+      vouches = vouches.filter(v => v !== voucher);
+      action = "removed";
+    } else {
+      vouches.push(voucher);
+      action = "added";
+    }
 
-  const newDesc = 
+    const updatedVouches = vouches.length ? vouches.join(", ") : "None";
+
+    await pool.query(
+      "UPDATE whitelist SET vouchers = $1 WHERE discord_id = $2",
+      [updatedVouches, userId]
+    );
+
+    const nameMatch = desc.match(/IN-GAME NAME: (.*)/);
+    const steamMatch = desc.match(/\((https:\/\/steamcommunity\.com\/.*?)\)/);
+    const ageMatch = desc.match(/ACCOUNT AGE: (.*)/);
+
+    const characterName = nameMatch ? nameMatch[1] : "Unknown";
+    const steam = steamMatch ? steamMatch[1] : "Unknown";
+    const accountAge = ageMatch ? ageMatch[1] : "Unknown";
+
+    const newDesc = 
 `NEW WHITELIST APPLICATION
 
 👤 APPLICANT INFORMATION:
-DISCORD USER: <@${applicantId}>
+DISCORD USER: <@${userId}>
 ACCOUNT AGE: ${accountAge}
 
 🎭 CHARACTER DETAILS:
@@ -170,18 +166,18 @@ STEAM LINK: [Steam Profile](${steam})
 
 ${vouches.length ? "🔵 PENDING ADMIN REVIEW" : "🟡 PENDING WHITELIST APPLICATION"}`;
 
-  embed.setDescription(newDesc);
+    embed.setDescription(newDesc);
 
-  await message.edit({ embeds: [embed] });
+    await message.edit({ embeds: [embed] });
 
-  return safeReply(
-    interaction,
-    action === "added" ? "✅ Vouch added." : "❌ Vouch removed."
-  );
-}
+    return safeReply(
+      interaction,
+      action === "added" ? "✅ Vouch added." : "❌ Vouch removed."
+    );
+  }
 
   /* =========================
-     APPROVE (FIXED)
+     APPROVE
   ========================= */
   if (interaction.customId === "approve") {
 
@@ -189,56 +185,73 @@ ${vouches.length ? "🔵 PENDING ADMIN REVIEW" : "🟡 PENDING WHITELIST APPLICA
       return safeReply(interaction, "❌ Only **Admins** can approve.");
     }
 
-    if (!desc.includes("NEW WHITELIST APPLICATION")) {
+    if (!isNewFormat && !isOldFormat) {
       return safeReply(interaction, "❌ This is not an application.");
     }
 
-    const userMatch = desc.match(/<@(\d+)>/);
-    if (!userMatch) return safeReply(interaction, "❌ User not found.");
-
-    const userId = userMatch[1];
     const member = await interaction.guild.members.fetch(userId).catch(() => null);
 
     if (!member) {
       return safeReply(interaction, "❌ Member not found.");
     }
 
-    const nameMatch = desc.match(/IN-GAME NAME: (.*)/);
-    const characterName = nameMatch ? nameMatch[1] : null;
+    let characterName = null;
 
-    // GIVE ROLE
-    try {
-      await member.roles.add(config.citizenRoleId);
-    } catch (err) {
-      console.error("ROLE ERROR:", err);
+    if (isNewFormat) {
+      const nameMatch = desc.match(/IN-GAME NAME: (.*)/);
+      if (nameMatch) characterName = nameMatch[1];
     }
 
-    // CHANGE NAME
-    if (characterName) {
-      try {
-        await member.setNickname(characterName);
-      } catch (err) {
-        console.error("NICKNAME ERROR:", err);
+    if (isOldFormat) {
+      const nameField = embed.data.fields.find(f => f.value?.includes("Character Name:"));
+      if (nameField) {
+        characterName = nameField.value.split("Character Name:")[1]?.trim();
       }
     }
 
-    desc = desc.replace(
-      "🔵 PENDING ADMIN REVIEW",
-      `✅ APPROVED BY ADMIN: ${interaction.user}`
-    );
+    try {
+      await member.roles.add(config.citizenRoleId);
+    } catch {}
 
-    embed.setDescription(desc);
+    if (characterName) {
+      try {
+        await member.setNickname(characterName);
+      } catch {}
+    }
+
+    if (isNewFormat) {
+      desc = desc.replace(
+        "🔵 PENDING ADMIN REVIEW",
+        `✅ APPROVED BY ADMIN: ${interaction.user}`
+      );
+
+      embed.setDescription(desc);
+    }
+
+    if (isOldFormat) {
+      const fields = embed.data.fields;
+
+      const statusField = fields.find(f => f.value?.includes("PENDING"));
+      if (statusField) {
+        statusField.value = "✅ APPROVED";
+      }
+
+      embed.addFields({
+        name: "✅ APPROVED BY",
+        value: `${interaction.user}`
+      });
+    }
 
     await message.edit({
       embeds: [embed],
       components: []
     });
 
-    return safeReply(interaction, "✅ Approved + role + name updated.");
+    return safeReply(interaction, "✅ Approved.");
   }
 
   /* =========================
-     DENY (FIXED)
+     DENY
   ========================= */
   if (interaction.customId === "deny") {
 
@@ -246,7 +259,7 @@ ${vouches.length ? "🔵 PENDING ADMIN REVIEW" : "🟡 PENDING WHITELIST APPLICA
       return safeReply(interaction, "❌ Only **Admins** can deny.");
     }
 
-    if (!desc.includes("NEW WHITELIST APPLICATION")) {
+    if (!isNewFormat && !isOldFormat) {
       return safeReply(interaction, "❌ This is not an application.");
     }
 
