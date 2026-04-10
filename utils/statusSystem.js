@@ -88,31 +88,31 @@ module.exports = (client) => {
       if (payloadKey === lastPayload) return;
       lastPayload = payloadKey;
 
-      /* =========================
-         🎨 EMBED
-      ========================= */
-// 🧠 UPTIME
-const uptimeSeconds = Math.floor(process.uptime());
-const hours = Math.floor(uptimeSeconds / 3600);
-const minutes = Math.floor((uptimeSeconds % 3600) / 60);
-
-// 🕒 NEXT RESTART (countdown)
-function getRestartCountdown() {
+// 🧠 CITY UPTIME (6AM / 6PM restart system)
+function getCityUptime() {
   const now = new Date();
-  const currentHour = now.getHours();
 
-  const nextHour = Math.ceil(currentHour / 6) * 6;
-  const next = new Date();
-  next.setHours(nextHour, 0, 0, 0);
+  const lastRestart = new Date(now);
+  const hour = now.getHours();
 
-  const diff = next - now;
+  if (hour >= 18) {
+    lastRestart.setHours(18, 0, 0, 0);
+  } else if (hour >= 6) {
+    lastRestart.setHours(6, 0, 0, 0);
+  } else {
+    lastRestart.setDate(now.getDate() - 1);
+    lastRestart.setHours(18, 0, 0, 0);
+  }
+
+  const diff = now - lastRestart;
 
   const h = Math.floor(diff / 1000 / 60 / 60);
   const m = Math.floor((diff / 1000 / 60) % 60);
 
-  return `in ${h} hrs, ${m} mins`;
+  return `${h} hrs, ${m} mins`;
 }
 
+// ✅ CREATE EMBED PROPERLY
 const embed = new EmbedBuilder()
   .setColor(
     statusType === "online"
@@ -122,7 +122,6 @@ const embed = new EmbedBuilder()
       : 0xED4245
   )
 
-  // 🔝 HEADER
   .setAuthor({
     name: "Poblacion Roleplay",
     iconURL: "https://cdn.discordapp.com/attachments/1469746646672867349/1469770055586676770/poblamain.png"
@@ -130,33 +129,30 @@ const embed = new EmbedBuilder()
 
   .setDescription("Developed and Maintained by Sxph")
 
-  // 🧾 HYBRID CONTENT (QUOTE STYLE)
-    .addFields({
-      name: "\u200b",
-      value:
-    `> **STATUS**
-    > 🟢 \`ONLINE\`
+  .addFields({
+    name: "\u200b",
+    value:
+`> **STATUS**
+> 🟢 \`ONLINE\`
 
-    > **PLAYERS**
-    > \`${playerCount}/${maxPlayers}\`
+> **PLAYERS**
+> \`${playerCount}/${maxPlayers}\`
 
-    > **F8 CONNECT COMMAND**
-    > \`connect poblacion.fivem.ph\`
-    > \`connect poblacion.fivem.me\`
+> **F8 CONNECT COMMAND**
+> \`connect poblacion.fivem.ph\`
+> \`connect poblacion.fivem.me\`
 
-    > **NEXT RESTART**
-    > \`${getRestartCountdown()}\`
+> **NEXT RESTART**
+> \`NOT SCHEDULED\`
 
-    > **UPTIME**
-    > \`${hours} hrs, ${minutes} mins\``
-    })
+> **UPTIME**
+> \`${getCityUptime()}\``
+  })
 
-  // 🎨 VISUALS
   .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770055586676770/poblamain.png")
 
   .setImage("https://cdn.discordapp.com/attachments/1475756977849237545/1491980601484513480/POBLACIONINTROVIDEO.gif")
 
-  // 🔻 FOOTER
   .setFooter({
     text: "txAdmin 8.0.1 • Updated every minute"
   })
