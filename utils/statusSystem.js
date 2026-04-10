@@ -11,7 +11,7 @@ const {
 
 module.exports = (client) => {
 
-  const STATUS_CHANNEL_ID = "1484857118757752913";
+  const STATUS_CHANNEL_ID = "1465003991208558724";
 
   let statusMessage = null;
   let lastPayload = "";
@@ -81,25 +81,38 @@ module.exports = (client) => {
         statusType = "offline";
       }
 
-      const statusText = formatStatus(statusType);
+ // 🔥 SMART STATUS
+let statusDisplay = "🔴  Offline";
 
-      // 🔒 Anti-spam edit
-      const payloadKey = `${statusType}-${playerCount}`;
-      if (payloadKey === lastPayload) return;
-      lastPayload = payloadKey;
+if (statusType === "online") {
+  if (playerCount >= maxPlayers) {
+    statusDisplay = "🔴  Full";
+  } else if (playerCount >= maxPlayers * 0.8) {
+    statusDisplay = "🟡  High Population";
+  } else {
+    statusDisplay = "🟢  Online";
+  }
+} else if (statusType === "starting") {
+  statusDisplay = "🟠  Starting";
+}
 
-// 🧠 CITY UPTIME (6AM / 6PM restart system)
+// 📊 PLAYER BAR
+function getPlayerBar(current, max) {
+  const totalBars = 10;
+  const filled = Math.round((current / max) * totalBars);
+  const empty = totalBars - filled;
+  return "▰".repeat(filled) + "▱".repeat(empty);
+}
+
+// ⏱ CITY UPTIME (6AM / 6PM)
 function getCityUptime() {
   const now = new Date();
-
   const lastRestart = new Date(now);
   const hour = now.getHours();
 
-  if (hour >= 18) {
-    lastRestart.setHours(18, 0, 0, 0);
-  } else if (hour >= 6) {
-    lastRestart.setHours(6, 0, 0, 0);
-  } else {
+  if (hour >= 18) lastRestart.setHours(18, 0, 0, 0);
+  else if (hour >= 6) lastRestart.setHours(6, 0, 0, 0);
+  else {
     lastRestart.setDate(now.getDate() - 1);
     lastRestart.setHours(18, 0, 0, 0);
   }
@@ -109,10 +122,12 @@ function getCityUptime() {
   const h = Math.floor(diff / 1000 / 60 / 60);
   const m = Math.floor((diff / 1000 / 60) % 60);
 
+  if (h === 0 && m < 5) return "Just Restarted";
+
   return `${h} hrs, ${m} mins`;
 }
 
-// ✅ CREATE EMBED PROPERLY
+// 🎨 FINAL EMBED
 const embed = new EmbedBuilder()
   .setColor(
     statusType === "online"
@@ -133,20 +148,21 @@ const embed = new EmbedBuilder()
     name: "\u200b",
     value:
 `> **STATUS**
-> 🟢 \`ONLINE\`
+${statusDisplay}
 
 > **PLAYERS**
-> \`${playerCount}/${maxPlayers}\`
+${playerCount}/${maxPlayers}
+${getPlayerBar(playerCount, maxPlayers)}
 
 > **F8 CONNECT COMMAND**
-> \`connect poblacion.fivem.ph\`
-> \`connect poblacion.fivem.me\`
+connect poblacion.fivem.ph
+connect poblacion.fivem.me
 
 > **NEXT RESTART**
-> \`NOT SCHEDULED\`
+NOT SCHEDULED
 
 > **UPTIME**
-> \`${getCityUptime()}\``
+${getCityUptime()}`
   })
 
   .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770055586676770/poblamain.png")
@@ -154,7 +170,7 @@ const embed = new EmbedBuilder()
   .setImage("https://cdn.discordapp.com/attachments/1475756977849237545/1491980601484513480/POBLACIONINTROVIDEO.gif")
 
   .setFooter({
-    text: "txAdmin 8.0.1 • Updated every minute"
+    text: "txAdmin 8.0.1 • Live Status"
   })
 
   .setTimestamp();
