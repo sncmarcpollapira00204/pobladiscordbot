@@ -5,9 +5,7 @@ const {
   EmbedBuilder
 } = require("discord.js");
 
-// ✅ IMPORTANT (for Node < 18)
-// Uncomment if needed:
-//const fetch = require("node-fetch");
+console.log("Running status update...");
 
 module.exports = (client) => {
 
