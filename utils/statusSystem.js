@@ -114,7 +114,13 @@ function getCityUptime() {
 
 // ✅ CREATE EMBED PROPERLY
 const embed = new EmbedBuilder()
-  .setColor(0x57F287)
+  .setColor(
+    statusType === "online"
+      ? 0x57F287
+      : statusType === "starting"
+      ? 0xFEE75C
+      : 0xED4245
+  )
 
   .setAuthor({
     name: "Poblacion Roleplay",
@@ -123,25 +129,25 @@ const embed = new EmbedBuilder()
 
   .setDescription("Developed and Maintained by Sxph")
 
-  .addFields({
-    name: "\u200b",
-    value:
+.addFields({
+  name: "\u200b",
+  value:
 `> **STATUS**
-🟢  Online
+🟢 \`ONLINE\`
 
 > **PLAYERS**
-${playerCount}/${maxPlayers}
+\`${playerCount}/${maxPlayers}\`
 
 > **F8 CONNECT COMMAND**
-connect poblacion.fivem.ph
-connect poblacion.fivem.me
+\`connect poblacion.fivem.ph\`
+\`connect poblacion.fivem.me\`
 
 > **NEXT RESTART**
-NOT SCHEDULED
+\`NOT SCHEDULED\`
 
 > **UPTIME**
-${getCityUptime()}`
-  })
+\`${getCityUptime()}\``
+})
 
   .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770055586676770/poblamain.png")
 
