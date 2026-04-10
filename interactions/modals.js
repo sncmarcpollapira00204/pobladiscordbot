@@ -77,7 +77,12 @@ module.exports = async (interaction) => {
 
 const embed = new EmbedBuilder()
 
-.setColor(0xff8c00)
+.setColor("#f1c40f")
+.setAuthor({
+  name: "POBLACION WHITELIST SYSTEM",
+  iconURL: interaction.guild.iconURL({ dynamic: true })
+})
+
 .setTitle("NEW WHITELIST APPLICATION")
 
 .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
@@ -102,9 +107,9 @@ const embed = new EmbedBuilder()
     /* BUTTONS */
 
     const buttons = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId("vouch").setLabel("Vouch").setEmoji("🖐️").setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId("approve").setLabel("Approve").setEmoji("✅").setStyle(ButtonStyle.Success),
-      new ButtonBuilder().setCustomId("deny").setLabel("Deny").setEmoji("✖️").setStyle(ButtonStyle.Danger)
+      new ButtonBuilder().setCustomId("vouch").setLabel("VOUCH").setEmoji("🖐️").setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId("approve").setLabel("APPROVE").setEmoji("✅").setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId("deny").setLabel("DENY").setEmoji("✖️").setStyle(ButtonStyle.Danger)
     );
 
     const channel = interaction.client.channels.cache.get(config.whitelistChannelId);
@@ -162,6 +167,9 @@ const embed = new EmbedBuilder()
       { name: "❌ **DENIED BY**", value: `${interaction.user}` },
       { name: "📄 **DENIAL REASON**", value: reason }
     );
+
+    embed.setColor("#e74c3c"); // STATUS COLOR
+
 
     await message.edit({
       embeds: [embed],

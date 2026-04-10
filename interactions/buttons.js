@@ -140,6 +140,9 @@ module.exports = async (interaction) => {
       )
     );
 
+    // COLOR STATUS
+    embed.setColor("#3498db");
+
     await message.edit({ embeds: [embed] });
 
     try {
@@ -181,6 +184,9 @@ module.exports = async (interaction) => {
         `✅ APPROVED BY: ${interaction.user}`
       )
     );
+
+    // STATUS COLOR GREEN
+    embed.setColor("#2ecc71");
 
     await message.edit({
       embeds: [embed],
