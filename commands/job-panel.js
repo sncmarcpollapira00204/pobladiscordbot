@@ -16,6 +16,7 @@ module.exports = {
 
   async execute(interaction) {
 
+    // 🔒 ADMIN ONLY
     if (!interaction.member.permissions.has("Administrator")) {
       return interaction.reply({
         content: "❌ You do not have permission.",
@@ -23,9 +24,7 @@ module.exports = {
       });
     }
 
-    // =========================
-    // EMBED (UNCHANGED DESIGN)
-    // =========================
+    // ✅ EXACT SAME EMBED STYLE AS GANG PANEL
     const embed = new EmbedBuilder()
       .setColor(0xff0000)
       .setAuthor({
@@ -41,27 +40,28 @@ module.exports = {
         "• One job only\n" +
         "• Invalid requests will be denied"
       )
-      .setThumbnail(interaction.guild.iconURL({ dynamic: true }))
+      .setThumbnail(
+        interaction.guild.iconURL({ dynamic: true })
+      )
       .setImage(
         "https://cdn.discordapp.com/attachments/1446053243221446667/1489807559228526622/jobs-ezgif.com-video-to-gif-converter.gif"
       )
       .setFooter({
         text: "Poblacion City Roleplay",
-        iconURL: "https://cdn.discordapp.com/attachments/1466355570805313719/1466355571706826842/Poblagif1.gif"
+        iconURL: "https://cdn.discordapp.com/attachments/1466355570805313719/1466355571706826842/Poblagif1.gif?ex=69d0d18b&is=69cf800b&hm=6241a4243e099977b144c4aedf2535dac1d9fe01ed439852c12c3f9d5b53af66"
       });
 
-    // =========================
-    // EMOJIS (SYNCED TO YOUR JOBS)
-    // =========================
+    /* =========================
+       DROPDOWN OPTIONS
+    ========================= */
+
     const jobEmojis = {
       POLICE: "🚓",
+      SHERIFF: "⭐",
       EMS: "🚑",
       MECHANIC: "🔧"
     };
 
-    // =========================
-    // DROPDOWN OPTIONS
-    // =========================
     const options = Object.entries(jobs).map(([key, job]) => ({
       label: job.name,
       value: key,
@@ -75,9 +75,10 @@ module.exports = {
 
     const dropdownRow = new ActionRowBuilder().addComponents(select);
 
-    // =========================
-    // UNROLE BUTTON
-    // =========================
+    /* =========================
+       LEAVE BUTTON (SAME STYLE)
+    ========================= */
+
     const leaveButton = new ButtonBuilder()
       .setCustomId("job_leave")
       .setLabel("Unrole Request")
@@ -86,9 +87,10 @@ module.exports = {
 
     const buttonRow = new ActionRowBuilder().addComponents(leaveButton);
 
-    // =========================
-    // SEND PANEL
-    // =========================
+    /* =========================
+       SEND PANEL
+    ========================= */
+
     await interaction.channel.send({
       embeds: [embed],
       components: [dropdownRow, buttonRow]

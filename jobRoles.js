@@ -1,20 +1,26 @@
 module.exports = {
   POLICE: {
     name: "POLICE DEPARTMENT",
-    roleId: "1471181724603125782",
-    directorRoleId: "1471171657333739520",
-    prefix: "PD"
+    roleId: "1464850822243422404",
+    directorRoleId: "1464850719701205205",
+    prefix: "PCPD"
+  },
+  SHERIFF: {
+    name: "SHERIFF'S DEPARTMENT",
+    roleId: "1472552713051963484",
+    directorRoleId: "1472552318213030067",
+    prefix: "PCSD"
   },
   EMS: {
     name: "EMERGENCY MEDICAL SERVICES",
-    roleId: "1474588905876623462",
-    directorRoleId: "1471172171727376516",
-    prefix: "EMS"
+    roleId: "1464850589547495447",
+    directorRoleId: "1464849644881182944",
+    prefix: "PCMD"
   },
   MECHANIC: {
     name: "MECHANIC DEPARTMENT",
-    roleId: "1471172230216941721",
-    directorRoleId: "1471172230216941721",
-    prefix: "MECH"
+    roleId: "1464851341863030987",
+    directorRoleId: "1464851230563106910",
+    prefix: "PCMECH"
   }
 };
