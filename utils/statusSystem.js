@@ -1,3 +1,6 @@
+const fetch = require("node-fetch");
+console.log("✅ Status system loaded");
+
 const {
   ActionRowBuilder,
   ButtonBuilder,
@@ -5,7 +8,6 @@ const {
   EmbedBuilder
 } = require("discord.js");
 
-console.log("Running status update...");
 
 module.exports = (client) => {
 
@@ -52,9 +54,20 @@ module.exports = (client) => {
      🔄 UPDATE LOOP
   ========================= */
   async function updateStatus() {
+
+    console.log("🔄 Updating status...");
+
     try {
-      const channel = await client.channels.fetch(STATUS_CHANNEL_ID).catch(() => null);
-      if (!channel) return;
+
+      const channel = await client.channels.fetch(STATUS_CHANNEL_ID).catch(err => {
+      console.error("❌ Channel fetch failed:", err);
+      return null;
+    });
+
+    if (!channel) {
+      console.log("❌ Channel not found or no access");
+      return;
+    }
 
       let playerCount = 0;
       let maxPlayers = 600;
