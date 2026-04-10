@@ -49,16 +49,15 @@ module.exports = (client) => {
       let status = "🟢 Online";
 
       // 🔥 FETCH DATA
-      const info = await safeFetch("http://poblacion.fivem.ph:30120/info.json");
-      const players = await safeFetch("http://poblacion.fivem.ph:30120/players.json");
+            const data = await safeFetch("https://servers-frontend.fivem.net/api/servers/single/6jabyd");
 
-      if (!info || !players) {
-        status = "🔴 Offline";
-      } else {
-        playerCount = players.length;
-        maxPlayers = info.vars?.sv_maxClients || 600;
-      }
-
+            if (!data || !data.Data) {
+            status = "🔴 Offline";
+            } else {
+            playerCount = data.Data.clients;
+            maxPlayers = data.Data.sv_maxclients;
+            }
+            
       // ⏱️ UPTIME
       const uptime = formatTime(Date.now() - serverStartTime);
 
