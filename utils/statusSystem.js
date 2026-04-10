@@ -134,21 +134,21 @@ const embed = new EmbedBuilder()
     .addFields({
       name: "\u200b",
       value:
-    `**STATUS**  
-    > 🟢  Online
+    `> **STATUS**
+    > 🟢 \`ONLINE\`
 
-    **PLAYERS**  
-    > ${playerCount}/${maxPlayers}
+    > **PLAYERS**
+    > \`${playerCount}/${maxPlayers}\`
 
-    **F8 CONNECT COMMAND**  
-    > connect poblacion.fivem.ph  
-    > connect poblacion.fivem.me
+    > **F8 CONNECT COMMAND**
+    > \`connect poblacion.fivem.ph\`
+    > \`connect poblacion.fivem.me\`
 
-    **NEXT RESTART**  
-    > ${getRestartCountdown()}
+    > **NEXT RESTART**
+    > \`${getRestartCountdown()}\`
 
-    **UPTIME**  
-    > ${hours} hrs, ${minutes} mins`
+    > **UPTIME**
+    > \`${hours} hrs, ${minutes} mins\``
     })
 
   // 🎨 VISUALS
