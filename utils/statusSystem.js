@@ -121,16 +121,19 @@ module.exports = (client) => {
 
         .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770157693075659/pgif2.gif")
 
-        .addFields(
-          { name: "STATUS", value: status },
-          { name: "PLAYERS", value: `${playerCount}/${maxPlayers}` },
-
-          { name: "\u200B", value: "\u200B" },
-
-          {
-            name: "F8 CONNECT COMMAND",
-            value: "```bash\nconnect poblacion.fivem.ph\nconnect poblacion.fivem.me```"
-          },
+      .addFields(
+        {
+          name: "> STATUS",
+          value: "```🟢 Online```"
+        },
+        {
+          name: "> PLAYERS",
+          value: `\`\`\`${playerCount}/${maxPlayers}\`\`\``
+        },
+        {
+          name: "> F8 CONNECT COMMAND",
+          value: "```bash\nconnect poblacion.fivem.ph\nconnect poblacion.fivem.me\nconnect 143.14.88.34```"
+        },
 
           { name: "\u200B", value: "\u200B" },
 
