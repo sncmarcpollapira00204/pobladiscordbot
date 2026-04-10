@@ -1,4 +1,3 @@
-const fetch = require("node-fetch");
 console.log("✅ Status system loaded");
 
 const {
