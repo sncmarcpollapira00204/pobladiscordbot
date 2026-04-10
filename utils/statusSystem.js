@@ -131,25 +131,25 @@ const embed = new EmbedBuilder()
   .setDescription("Developed and Maintained by Sxph")
 
   // 🧾 HYBRID CONTENT (QUOTE STYLE)
-  .addFields({
-    name: "\u200b",
-    value:
-`> **STATUS**
-> ${statusType === "online" ? "🟢 Online" : statusType === "starting" ? "🟠 Starting" : "🔴 Offline"}
->
-> **PLAYERS**
-> ${playerCount}/${maxPlayers}
->
-> **F8 CONNECT COMMAND**
-> connect poblacion.fivem.ph
-> connect poblacion.fivem.me
->
-> **NEXT RESTART**
-> ${getRestartCountdown()}
->
-> **UPTIME**
-> ${hours} hrs, ${minutes} mins`
-  })
+    .addFields({
+      name: "\u200b",
+      value:
+    `**STATUS**  
+    > 🟢  Online
+
+    **PLAYERS**  
+    > ${playerCount}/${maxPlayers}
+
+    **F8 CONNECT COMMAND**  
+    > connect poblacion.fivem.ph  
+    > connect poblacion.fivem.me
+
+    **NEXT RESTART**  
+    > ${getRestartCountdown()}
+
+    **UPTIME**  
+    > ${hours} hrs, ${minutes} mins`
+    })
 
   // 🎨 VISUALS
   .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770055586676770/poblamain.png")
