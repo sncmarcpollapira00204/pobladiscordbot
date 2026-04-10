@@ -17,11 +17,18 @@ module.exports = (client) => {
   ========================= */
   async function safeFetch(url) {
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, { timeout: 5000 });
       return await res.json();
     } catch {
       return null;
     }
+  }
+
+  /* =========================
+     ✨ TEXT SPACING (DistrictX style)
+  ========================= */
+  function spaced(text) {
+    return text.split("").join(" ");
   }
 
   /* =========================
@@ -34,16 +41,25 @@ module.exports = (client) => {
 
       let playerCount = 0;
       let maxPlayers = 600;
-      let statusText = "🟢 Online";
+      let statusText = "🔴 Offline";
 
-      // ✅ CFX API
+      // 🔥 MAIN API
       const data = await safeFetch("https://servers-frontend.fivem.net/api/servers/single/6jabyd");
 
-      if (!data || !data.Data) {
+      // 🔥 DIRECT SERVER CHECK (REAL STATUS)
+      const directCheck = await safeFetch("http://143.14.88.34:30120/info.json");
+
+      if (!data || !data.Data || !directCheck) {
         statusText = "🔴 Offline";
       } else {
-        playerCount = data.Data.clients;
-        maxPlayers = data.Data.sv_maxclients;
+        playerCount = data.Data.clients ?? 0;
+        maxPlayers = data.Data.sv_maxclients ?? 600;
+
+        if (playerCount === 0) {
+          statusText = "🟠 " + spaced("Starting");
+        } else {
+          statusText = "🟢 " + spaced("Online");
+        }
       }
 
       // 🔒 Prevent spam edits
@@ -55,7 +71,7 @@ module.exports = (client) => {
          🎨 DISTRICTX STYLE EMBED
       ========================= */
       const embed = new EmbedBuilder()
-        .setColor(0x111214)
+        .setColor(0x2b2d31)
 
         .setTitle("Poblacion Roleplay")
         .setDescription("Developed and Maintained by Sxph")
@@ -65,28 +81,24 @@ module.exports = (client) => {
         .addFields(
           {
             name: "STATUS",
-            value: statusText,
-            inline: true
+            value: `│ ${statusText}`
           },
           {
             name: "PLAYERS",
-            value: `${playerCount}/${maxPlayers}`,
-            inline: true
+            value: `│ ${playerCount}/${maxPlayers}`
           },
           {
-            name: "\u200B",
-            value: "\u200B"
-          },
-          {
-            name: "CONNECT",
-            value: "```connect poblacion.fivem.ph```"
+            name: "F8 CONNECT COMMAND",
+            value:
+`│ connect poblacion.fivem.ph
+│ connect poblacion.fivem.me`
           }
         )
 
         .setImage("https://cdn.discordapp.com/attachments/1475756977849237545/1491980601484513480/POBLACIONINTROVIDEO.gif")
 
         .setFooter({
-          text: "Poblacion • Live Status"
+          text: "txAdmin 8.0.1 • Updated every minute"
         });
 
       /* =========================
@@ -94,7 +106,7 @@ module.exports = (client) => {
       ========================= */
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setLabel("Join Server")
+          .setLabel("Connect")
           .setStyle(ButtonStyle.Link)
           .setURL("https://cfx.re/join/6jabyd")
       );
