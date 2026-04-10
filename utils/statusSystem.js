@@ -5,8 +5,7 @@ const {
   EmbedBuilder
 } = require("discord.js");
 
-// ✅ IMPORTANT (for Node < 18)
-// Uncomment if needed:
+// For Node < 18:
 // const fetch = require("node-fetch");
 
 module.exports = (client) => {
@@ -35,19 +34,41 @@ module.exports = (client) => {
   }
 
   /* =========================
-     ✨ TEXT SPACING
+     📊 PLAYER BAR
   ========================= */
-  function spaced(text) {
-    return text.split("").join(" ");
+  function getPlayerBar(current, max) {
+    const totalBars = 10;
+    const percent = Math.round((current / max) * 100);
+    const filled = Math.round((current / max) * totalBars);
+    const empty = totalBars - filled;
+
+    const bar = "█".repeat(filled) + "░".repeat(empty);
+    return `${bar} (${percent}%)`;
   }
 
   /* =========================
-     🎨 FORMAT STATUS
+     ⏱ CITY UPTIME (6AM / 6PM)
   ========================= */
-  function formatStatus(type) {
-    if (type === "online") return `🟢  ${spaced("Online")}`;
-    if (type === "starting") return `🟠  ${spaced("Starting")}`;
-    return `🔴  ${spaced("Offline")}`;
+  function getCityUptime() {
+    const now = new Date();
+    const lastRestart = new Date(now);
+    const hour = now.getHours();
+
+    if (hour >= 18) lastRestart.setHours(18, 0, 0, 0);
+    else if (hour >= 6) lastRestart.setHours(6, 0, 0, 0);
+    else {
+      lastRestart.setDate(now.getDate() - 1);
+      lastRestart.setHours(18, 0, 0, 0);
+    }
+
+    const diff = now - lastRestart;
+
+    const h = Math.floor(diff / 1000 / 60 / 60);
+    const m = Math.floor((diff / 1000 / 60) % 60);
+
+    if (h === 0 && m < 5) return "Just Restarted";
+
+    return `${h} hrs, ${m} mins`;
   }
 
   /* =========================
@@ -62,7 +83,6 @@ module.exports = (client) => {
       let maxPlayers = 600;
       let statusType = "offline";
 
-      // ✅ ONLY FiveM API (FIXED)
       const data = await safeFetch(
         "https://servers-frontend.fivem.net/api/servers/single/6jabyd"
       );
@@ -70,89 +90,67 @@ module.exports = (client) => {
       if (data?.Data) {
         playerCount = data.Data.clients ?? 0;
         maxPlayers = data.Data.sv_maxclients ?? 600;
-
-        // smarter status logic
-        if (playerCount === 0) {
-          statusType = "starting";
-        } else {
-          statusType = "online";
-        }
-      } else {
-        statusType = "offline";
+        statusType = playerCount === 0 ? "starting" : "online";
       }
 
- // 🔥 SMART STATUS
-let statusDisplay = "🔴  Offline";
+      // 🔥 PULSE EFFECT
+      const pulse = Date.now() % 2000 < 1000 ? "🟢" : "🟩";
 
-if (statusType === "online") {
-  if (playerCount >= maxPlayers) {
-    statusDisplay = "🔴  Full";
-  } else if (playerCount >= maxPlayers * 0.8) {
-    statusDisplay = "🟡  High Population";
-  } else {
-    statusDisplay = "🟢  Online";
-  }
-} else if (statusType === "starting") {
-  statusDisplay = "🟠  Starting";
-}
+      // 🔥 SMART STATUS
+      let statusDisplay = "🔴  Offline";
 
-// 📊 PLAYER BAR
-function getPlayerBar(current, max) {
-  const totalBars = 10;
-  const filled = Math.round((current / max) * totalBars);
-  const empty = totalBars - filled;
-  return "▰".repeat(filled) + "▱".repeat(empty);
-}
+      if (statusType === "online") {
+        if (playerCount >= maxPlayers) {
+          statusDisplay = "🔴  Full";
+        } else if (playerCount >= maxPlayers * 0.9) {
+          statusDisplay = "🟠  Almost Full";
+        } else if (playerCount >= maxPlayers * 0.7) {
+          statusDisplay = "🟡  High Population";
+        } else {
+          statusDisplay = `${pulse}  Online`;
+        }
+      } else if (statusType === "starting") {
+        statusDisplay = "🟠  Starting";
+      }
 
-// ⏱ CITY UPTIME (6AM / 6PM)
-function getCityUptime() {
-  const now = new Date();
-  const lastRestart = new Date(now);
-  const hour = now.getHours();
+      // ⚠️ PLAYER WARNING
+      let warning = "";
+      if (playerCount >= maxPlayers) warning = "\n🚨 Server Full";
+      else if (playerCount >= maxPlayers * 0.9) warning = "\n⚠️ Almost Full";
 
-  if (hour >= 18) lastRestart.setHours(18, 0, 0, 0);
-  else if (hour >= 6) lastRestart.setHours(6, 0, 0, 0);
-  else {
-    lastRestart.setDate(now.getDate() - 1);
-    lastRestart.setHours(18, 0, 0, 0);
-  }
+      // 🔒 Anti-spam
+      const payloadKey = `${statusType}-${playerCount}`;
+      if (payloadKey === lastPayload) return;
+      lastPayload = payloadKey;
 
-  const diff = now - lastRestart;
+      /* =========================
+         🎨 EMBED
+      ========================= */
+      const embed = new EmbedBuilder()
+        .setColor(
+          playerCount >= maxPlayers
+            ? 0xED4245
+            : playerCount >= maxPlayers * 0.8
+            ? 0xFEE75C
+            : 0x57F287
+        )
 
-  const h = Math.floor(diff / 1000 / 60 / 60);
-  const m = Math.floor((diff / 1000 / 60) % 60);
+        .setAuthor({
+          name: "Poblacion Roleplay",
+          iconURL: "https://cdn.discordapp.com/attachments/1469746646672867349/1469770055586676770/poblamain.png"
+        })
 
-  if (h === 0 && m < 5) return "Just Restarted";
+        .setDescription("Developed and Maintained by Sxph")
 
-  return `${h} hrs, ${m} mins`;
-}
-
-// 🎨 FINAL EMBED
-const embed = new EmbedBuilder()
-  .setColor(
-    statusType === "online"
-      ? 0x57F287
-      : statusType === "starting"
-      ? 0xFEE75C
-      : 0xED4245
-  )
-
-  .setAuthor({
-    name: "Poblacion Roleplay",
-    iconURL: "https://cdn.discordapp.com/attachments/1469746646672867349/1469770055586676770/poblamain.png"
-  })
-
-  .setDescription("Developed and Maintained by Sxph")
-
-  .addFields({
-    name: "\u200b",
-    value:
+        .addFields({
+          name: "\u200b",
+          value:
 `> **STATUS**
 ${statusDisplay}
 
 > **PLAYERS**
 ${playerCount}/${maxPlayers}
-${getPlayerBar(playerCount, maxPlayers)}
+${getPlayerBar(playerCount, maxPlayers)}${warning}
 
 > **F8 CONNECT COMMAND**
 connect poblacion.fivem.ph
@@ -163,17 +161,17 @@ NOT SCHEDULED
 
 > **UPTIME**
 ${getCityUptime()}`
-  })
+        })
 
-  .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770055586676770/poblamain.png")
+        .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770055586676770/poblamain.png")
 
-  .setImage("https://cdn.discordapp.com/attachments/1475756977849237545/1491980601484513480/POBLACIONINTROVIDEO.gif")
+        .setImage("https://cdn.discordapp.com/attachments/1475756977849237545/1491980601484513480/POBLACIONINTROVIDEO.gif")
 
-  .setFooter({
-    text: "txAdmin 8.0.1 • Live Status"
-  })
+        .setFooter({
+          text: "txAdmin 8.0.1 • Live Status"
+        })
 
-  .setTimestamp();
+        .setTimestamp();
 
       /* =========================
          🔘 BUTTON
@@ -186,7 +184,7 @@ ${getCityUptime()}`
       );
 
       /* =========================
-         📌 FIND / CREATE MESSAGE
+         📌 MESSAGE HANDLING
       ========================= */
       if (!statusMessage) {
         const messages = await channel.messages.fetch({ limit: 10 });
@@ -213,6 +211,6 @@ ${getCityUptime()}`
     }
   }
 
-  setInterval(updateStatus, 60000);
+  setInterval(updateStatus, 15000); // ⚡ faster updates
   updateStatus();
 };
