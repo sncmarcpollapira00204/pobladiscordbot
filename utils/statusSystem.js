@@ -91,40 +91,78 @@ module.exports = (client) => {
       /* =========================
          🎨 EMBED
       ========================= */
-      const embed = new EmbedBuilder()
-        .setColor(statusType === "online" ? 0x57F287 : statusType === "starting" ? 0xFEE75C : 0xED4245)
+// 🧠 UPTIME
+const uptimeSeconds = Math.floor(process.uptime());
+const hours = Math.floor(uptimeSeconds / 3600);
+const minutes = Math.floor((uptimeSeconds % 3600) / 60);
 
-        .setAuthor({
-          name: "Poblacion Roleplay",
-          iconURL: "https://cdn.discordapp.com/attachments/1469746646672867349/1469770055586676770/poblamain.png"
-        })
+// 🕒 NEXT RESTART (countdown style)
+function getRestartCountdown() {
+  const now = new Date();
+  const currentHour = now.getHours();
 
-        .setTitle(
-          statusType === "online"
-            ? "🟢 Server Online"
-            : statusType === "starting"
-            ? "🟠 Server Starting"
-            : "🔴 Server Offline"
-        )
+  const nextHour = Math.ceil(currentHour / 6) * 6;
+  const next = new Date();
+  next.setHours(nextHour, 0, 0, 0);
 
-        .setDescription(
-      `**Players:** ${playerCount}/${maxPlayers}
+  const diff = next - now;
 
-      **Connect:**
-      \`\`\`
-      connect poblacion.fivem.ph
-      \`\`\``
-        )
+  const h = Math.floor(diff / 1000 / 60 / 60);
+  const m = Math.floor((diff / 1000 / 60) % 60);
 
-        .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770055586676770/poblamain.png")
+  return `in ${h} hrs, ${m} mins`;
+}
 
-        .setImage("https://cdn.discordapp.com/attachments/1475756977849237545/1491980601484513480/POBLACIONINTROVIDEO.gif")
+const embed = new EmbedBuilder()
+  .setColor(
+    statusType === "online"
+      ? 0x57F287
+      : statusType === "starting"
+      ? 0xFEE75C
+      : 0xED4245
+  )
 
-        .setFooter({
-          text: "Updated every minute • Poblacion RP"
-        })
+  .setAuthor({
+    name: "Poblacion Roleplay"
+  })
 
-        .setTimestamp();
+  .setDescription("Developed and Maintained by Sxph")
+
+  .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770055586676770/poblamain.png")
+
+  .addFields(
+    {
+      name: "STATUS",
+      value:
+`🟢 Online`
+    },
+    {
+      name: "PLAYERS",
+      value: `${playerCount}/${maxPlayers}`
+    },
+    {
+      name: "F8 CONNECT COMMAND",
+      value:
+`connect poblacion.fivem.ph
+connect poblacion.fivem.me`
+    },
+    {
+      name: "NEXT RESTART",
+      value: getRestartCountdown()
+    },
+    {
+      name: "UPTIME",
+      value: `${hours} hrs, ${minutes} mins`
+    }
+  )
+
+  .setImage("https://cdn.discordapp.com/attachments/1475756977849237545/1491980601484513480/POBLACIONINTROVIDEO.gif")
+
+  .setFooter({
+    text: "txAdmin 8.0.1 • Updated every minute"
+  })
+
+  .setTimestamp();
 
       /* =========================
          🔘 BUTTON
