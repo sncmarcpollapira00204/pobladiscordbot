@@ -168,7 +168,16 @@ module.exports = async (interaction) => {
 
     // ✅ ADD VOUCH
     vouches.push(voucher);
-    vouchField.value = vouches.join(", ");
+    vouchField.value = vouches.join(",\n");
+
+    if (vouches.length > 0) {
+      embed.setDescription(
+        embed.data.description.replace(
+          "🟡 PENDING WHITELIST APPLICATION",
+          "🔵 PENDING ADMIN REVIEW"
+        )
+      );
+    }
 
     await message.edit({ embeds: [embed] });
 
@@ -202,7 +211,12 @@ module.exports = async (interaction) => {
 
     const characterName = getCharacterName(fields);
 
-    statusField.value = "✅ **APPROVED**";
+    embed.setDescription(
+      embed.data.description.replace(
+        /🟡 PENDING WHITELIST APPLICATION|🔵 PENDING ADMIN REVIEW/,
+        `✅ APPROVED BY: ${interaction.user}`
+      )
+    );
 
     embed.addFields({
       name: "✅ APPROVED BY",

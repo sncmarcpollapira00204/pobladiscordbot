@@ -82,51 +82,31 @@ module.exports = async (interaction) => {
 
     /* EMBED */
 
-    const embed = new EmbedBuilder()
-      .setColor(0xff8c00)
-      .setAuthor({
-        name: "[ NEW WHITELIST APPLICATION ]",
-        iconURL: interaction.guild.iconURL({ dynamic: true })
-      })
-      .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
-      .addFields(
-        { name: SPACE, value: "👤 **APPLICANT INFORMATION:**" },
-        {
-          name: SPACE,
-          value:
-            `**Discord User:** ${interaction.user}\n` +
-            `**Account Age:** ${accountAge}`
-        },
+const embed = new EmbedBuilder()
+  .setColor(0xff8c00)
+  .setTitle("NEW WHITELIST APPLICATION")
+  .setDescription(
+    `👤 **APPLICANT INFORMATION:**\n` +
+    `DISCORD USER: ${interaction.user}\n` +
+    `ACCOUNT AGE: ${accountAge}\n\n` +
 
-        { name: SPACE, value: "🎭 **CHARACTER DETAILS:**" },
-        {
-          name: SPACE,
-          value:
-            `**Character Name:** ${characterName}\n` +
-            `**Character Age:** ${age}`
-        },
+    `🎭 **CHARACTER DETAILS:**\n` +
+    `IN-GAME NAME: ${characterName}\n` +
+    `STEAM LINK: ${steamProfile}\n\n` +
 
-        { name: SPACE, value: "🔗 **STEAM LINK:**" },
-        {
-          name: SPACE,
-          value: `🌐 [Steam Profile](${steamProfile})`
-        },
+    `👥 **VOUCHED BY:** None\n\n` +
 
-        { name: SPACE, value: "📊 **APPLICATION STATUS:**" },
-        {
-          name: SPACE,
-          value: "🟡 **PENDING REVIEW**"
-        },
+    `🟡 PENDING WHITELIST APPLICATION`
+  )
 
-        { name: SPACE, value: SPACE },
+  // 👇 ADD THIS PART HERE
+    .addFields({
+      name: "\u200B",
+      value: `Character Name: ${characterName}\nSteam: ${steamProfile}`
+    })
 
-        {
-          name: "👥 **VOUCHED BY:**",
-          value: "None"
-        }
-      )
-      .setFooter({ text: "Poblacion City Roleplay" })
-      .setTimestamp();
+  .setFooter({ text: "Poblacion City Roleplay" })
+  .setTimestamp();
 
     /* BUTTONS */
 
