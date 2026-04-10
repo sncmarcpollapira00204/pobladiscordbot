@@ -96,7 +96,7 @@ const uptimeSeconds = Math.floor(process.uptime());
 const hours = Math.floor(uptimeSeconds / 3600);
 const minutes = Math.floor((uptimeSeconds % 3600) / 60);
 
-// 🕒 NEXT RESTART (countdown style)
+// 🕒 NEXT RESTART (countdown)
 function getRestartCountdown() {
   const now = new Date();
   const currentHour = now.getHours();
@@ -122,41 +122,41 @@ const embed = new EmbedBuilder()
       : 0xED4245
   )
 
+  // 🔝 HEADER
   .setAuthor({
-    name: "Poblacion Roleplay"
+    name: "Poblacion Roleplay",
+    iconURL: "https://cdn.discordapp.com/attachments/1469746646672867349/1469770055586676770/poblamain.png"
   })
 
   .setDescription("Developed and Maintained by Sxph")
 
-  .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770055586676770/poblamain.png")
-
-.addFields(
-  {
-    name: "STATUS",
-    value: "│ 🟢 Online\n│",
-  },
-  {
-    name: "PLAYERS",
-    value: `│ ${playerCount}/${maxPlayers}\n│`,
-  },
-  {
-    name: "F8 CONNECT COMMAND",
+  // 🧾 HYBRID CONTENT (QUOTE STYLE)
+  .addFields({
+    name: "\u200b",
     value:
-`│ connect poblacion.fivem.ph
-│ connect poblacion.fivem.me`,
-  },
-  {
-    name: "NEXT RESTART",
-    value: `│ ${getRestartCountdown()}\n│`,
-  },
-  {
-    name: "UPTIME",
-    value: `│ ${hours} hrs, ${minutes} mins`,
-  }
-)
+`> **STATUS**
+> ${statusType === "online" ? "🟢 Online" : statusType === "starting" ? "🟠 Starting" : "🔴 Offline"}
+>
+> **PLAYERS**
+> ${playerCount}/${maxPlayers}
+>
+> **F8 CONNECT COMMAND**
+> connect poblacion.fivem.ph
+> connect poblacion.fivem.me
+>
+> **NEXT RESTART**
+> ${getRestartCountdown()}
+>
+> **UPTIME**
+> ${hours} hrs, ${minutes} mins`
+  })
+
+  // 🎨 VISUALS
+  .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770055586676770/poblamain.png")
 
   .setImage("https://cdn.discordapp.com/attachments/1475756977849237545/1491980601484513480/POBLACIONINTROVIDEO.gif")
 
+  // 🔻 FOOTER
   .setFooter({
     text: "txAdmin 8.0.1 • Updated every minute"
   })
