@@ -17,13 +17,6 @@ module.exports = () => {
     .setStyle(TextInputStyle.Short)
     .setRequired(true);
 
-  const age = new TextInputBuilder()
-    .setCustomId("age")
-    .setLabel("Character Age")
-    .setPlaceholder("18+")
-    .setStyle(TextInputStyle.Short)
-    .setRequired(true);
-
   const steamProfile = new TextInputBuilder()
     .setCustomId("steam_profile")
     .setLabel("Steam Profile URL")

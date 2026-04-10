@@ -86,18 +86,19 @@ const embed = new EmbedBuilder()
   .setColor(0xff8c00)
   .setTitle("NEW WHITELIST APPLICATION")
   .setDescription(
-    `👤 **APPLICANT INFORMATION:**\n` +
-    `DISCORD USER: ${interaction.user}\n` +
-    `ACCOUNT AGE: ${accountAge}\n\n` +
+  `👤 **APPLICANT INFORMATION**\n` +
+  `> **Discord User:** ${interaction.user}\n` +
+  `> **Account Age:** ${accountAge}\n\n` +
 
-    `🎭 **CHARACTER DETAILS:**\n` +
-    `IN-GAME NAME: ${characterName}\n` +
-    `STEAM LINK: ${steamProfile}\n\n` +
+  `🎭 **CHARACTER DETAILS**\n` +
+  `> **In-Game Name:** ${characterName}\n` +
+  `> **Steam Link:** [Steam Profile](${steamProfile})\n\n` +
 
-    `👥 **VOUCHED BY:** None\n\n` +
+  `👥 **VOUCHED BY**\n` +
+  `> None\n\n` +
 
-    `🟡 PENDING WHITELIST APPLICATION`
-  )
+  `🟡 **PENDING WHITELIST APPLICATION**`
+)
 
   // 👇 ADD THIS PART HERE
     .addFields({

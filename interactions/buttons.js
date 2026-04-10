@@ -75,13 +75,7 @@ module.exports = async (interaction) => {
         new TextInputBuilder()
           .setCustomId("character_name")
           .setLabel("Character Name")
-          .setStyle(TextInputStyle.Short)
-          .setRequired(true)
-      ),
-      new ActionRowBuilder().addComponents(
-        new TextInputBuilder()
-          .setCustomId("age")
-          .setLabel("Character Age")
+          .setPlaceholder("Firstname Lastname")
           .setStyle(TextInputStyle.Short)
           .setRequired(true)
       ),
@@ -89,6 +83,7 @@ module.exports = async (interaction) => {
         new TextInputBuilder()
           .setCustomId("steam_profile")
           .setLabel("Steam Profile URL")
+          .setPlaceholder("https://steamcommunity.com/profiles/")
           .setStyle(TextInputStyle.Short)
           .setRequired(true)
       )
