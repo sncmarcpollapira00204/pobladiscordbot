@@ -154,7 +154,7 @@ const embed = new EmbedBuilder()
   .setImage("https://cdn.discordapp.com/attachments/1475756977849237545/1491980601484513480/POBLACIONINTROVIDEO.gif")
 
   .setFooter({
-    text: "txAdmin 8.0.1 • Updated every minute"
+    text: "STATUS GWEN? • POBLACION ROLEPLAY CFX"
   })
 
   .setTimestamp();
