@@ -77,20 +77,20 @@ module.exports = async (interaction) => {
 
 const embed = new EmbedBuilder()
   .setColor(0xff8c00)
-  .setTitle("NEW WHITELIST APPLICATION")
-  .setDescription(
-  `👤 **APPLICANT INFORMATION**\n` +
-  `> **Discord User:** ${interaction.user}\n` +
-  `> **Account Age:** ${accountAge}\n\n` +
+.setTitle("NEW WHITELIST APPLICATION")
 
-  `🎭 **CHARACTER DETAILS**\n` +
-  `> **In-Game Name:** ${characterName}\n` +
-  `> **Steam Link:** [Steam Profile](${steamProfile})\n\n` +
+.setDescription(
+  `👤 **APPLICANT INFORMATION:**\n` +
+  `DISCORD USER: ${interaction.user}\n` +
+  `ACCOUNT AGE: ${accountAge}\n\n` +
 
-  `👥 **VOUCHED BY**\n` +
-  `> None\n\n` +
+  `🎭 **CHARACTER DETAILS:**\n` +
+  `IN-GAME NAME: ${characterName}\n` +
+  `STEAM LINK: [Steam Profile](${steamProfile})\n\n` +
 
-  `🟡 **PENDING WHITELIST APPLICATION**`
+  `👥 **VOUCHED BY:** None\n\n` +
+
+  `🟡 PENDING WHITELIST APPLICATION`
 )
 
   // 👇 ADD THIS PART HERE

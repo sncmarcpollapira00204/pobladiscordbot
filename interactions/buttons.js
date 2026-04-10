@@ -163,13 +163,15 @@ module.exports = async (interaction) => {
 
     // ✅ ADD VOUCH
     vouches.push(voucher);
-    vouchField.value = vouches.join(",\n");
+    const formattedVouches = vouches.length
+      ? vouches.join(",\n")
+      : "None";
 
     if (vouches.length > 0) {
-      embed.setDescription(
-        embed.data.description.replace(
-          "🟡 PENDING WHITELIST APPLICATION",
-          "🔵 PENDING ADMIN REVIEW"
+    embed.setDescription(
+    embed.data.description.replace(
+    /👥 \*\*VOUCHED BY:\*\*[\s\S]*?(🟡 PENDING WHITELIST APPLICATION|🔵 PENDING ADMIN REVIEW)/,
+    `👥 **VOUCHED BY:** ${formattedVouches}\n\n🔵 PENDING ADMIN REVIEW`
         )
       );
     }
