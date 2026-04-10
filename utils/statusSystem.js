@@ -80,20 +80,30 @@ module.exports = (client) => {
 
       // 🎨 EMBED
       const embed = new EmbedBuilder()
-        .setColor(status.includes("Online") ? 0x00ff99 : 0xff0000)
-        .setTitle("Poblacion City Roleplay")
+        .setColor(0x2b2d31)
+        .setAuthor({ name: "Poblacion Roleplay" })
+        .setDescription("Developed and Maintained by Sxph and RryBaN")
+
+        .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770157693075659/pgif2.gif") // 👈 RIGHT SIDE
+
         .addFields(
-          { name: "STATUS", value: status },
+          { name: "STATUS", value: "🟢 Online" },
           { name: "PLAYERS", value: `${playerCount}/${maxPlayers}` },
+
+          { name: "\u200B", value: "\u200B" },
+
           {
-            name: "F8 CONNECT",
-            value: "```connect poblacion.fivem.ph\nconnect poblacion.fivem.me```"
+            name: "F8 CONNECT COMMAND",
+            value: "```bash\nconnect poblacion.fivem.ph\nconnect poblacion.fivem.me```"
           },
+
           { name: "NEXT RESTART", value: restartText },
           { name: "UPTIME", value: uptime }
         )
-        .setImage("https://cdn.discordapp.com/attachments/1475756977849237545/1491980601484513480/POBLACIONINTROVIDEO.gif")
-        .setFooter({ text: "Poblacion City Roleplay • Live Status" })
+
+        .setImage("https://cdn.discordapp.com/attachments/1475756977849237545/1491980601484513480/POBLACIONINTROVIDEO.gif") // 👈 BOTTOM
+
+        .setFooter({ text: "txAdmin • Updated every minute" })
         .setTimestamp();
 
       // 🔘 BUTTON
