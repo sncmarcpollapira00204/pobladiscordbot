@@ -13,11 +13,17 @@ module.exports = (client) => {
   let lastPayload = "";
 
   /* =========================
-     🌐 SAFE FETCH
+     🌐 SAFE FETCH (FIXED TIMEOUT)
   ========================= */
   async function safeFetch(url) {
     try {
-      const res = await fetch(url, { timeout: 5000 });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeout);
+
+      if (!res.ok) return null;
       return await res.json();
     } catch {
       return null;
@@ -25,10 +31,19 @@ module.exports = (client) => {
   }
 
   /* =========================
-     ✨ TEXT SPACING (DistrictX style)
+     ✨ TEXT SPACING
   ========================= */
   function spaced(text) {
     return text.split("").join(" ");
+  }
+
+  /* =========================
+     🎨 FORMAT STATUS
+  ========================= */
+  function formatStatus(type) {
+    if (type === "online") return `🟢  ${spaced("Online")}`;
+    if (type === "starting") return `🟠  ${spaced("Starting")}`;
+    return `🔴  ${spaced("Offline")}`;
   }
 
   /* =========================
@@ -41,39 +56,44 @@ module.exports = (client) => {
 
       let playerCount = 0;
       let maxPlayers = 600;
-      let statusText = "🔴 Offline";
+      let statusType = "offline";
 
-      // 🔥 MAIN API
+      // 🔥 API CHECK
       const data = await safeFetch("https://servers-frontend.fivem.net/api/servers/single/6jabyd");
 
-      // 🔥 DIRECT SERVER CHECK (REAL STATUS)
-      const directCheck = await safeFetch("http://143.14.88.34:30120/info.json");
+      // 🔥 DIRECT CHECK (REAL)
+      const direct = await safeFetch("http://143.14.88.34:30120/info.json");
 
-      if (!data || !data.Data || !directCheck) {
-        statusText = "🔴 Offline";
-      } else {
+      if (data?.Data && direct) {
         playerCount = data.Data.clients ?? 0;
         maxPlayers = data.Data.sv_maxclients ?? 600;
 
         if (playerCount === 0) {
-          statusText = "🟠 " + spaced("Starting");
+          statusType = "starting";
         } else {
-          statusText = "🟢 " + spaced("Online");
+          statusType = "online";
         }
+      } else {
+        statusType = "offline";
       }
 
-      // 🔒 Prevent spam edits
-      const payloadKey = `${statusText}-${playerCount}`;
+      const statusText = formatStatus(statusType);
+
+      // 🔒 Anti spam edit
+      const payloadKey = `${statusType}-${playerCount}`;
       if (payloadKey === lastPayload) return;
       lastPayload = payloadKey;
 
       /* =========================
-         🎨 DISTRICTX STYLE EMBED
+         🎨 EMBED (FINAL POLISH)
       ========================= */
       const embed = new EmbedBuilder()
         .setColor(0x2b2d31)
 
-        .setTitle("Poblacion Roleplay")
+        .setAuthor({
+          name: "Poblacion Roleplay"
+        })
+
         .setDescription("Developed and Maintained by Sxph")
 
         .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770157693075659/pgif2.gif")
@@ -81,11 +101,11 @@ module.exports = (client) => {
         .addFields(
           {
             name: "STATUS",
-            value: `│ ${statusText}`
+            value: `│ ${statusText}\n│`
           },
           {
             name: "PLAYERS",
-            value: `│ ${playerCount}/${maxPlayers}`
+            value: `│ ${playerCount}/${maxPlayers}\n│`
           },
           {
             name: "F8 CONNECT COMMAND",
@@ -112,7 +132,7 @@ module.exports = (client) => {
       );
 
       /* =========================
-         📌 FIND OLD MESSAGE
+         📌 FIND / CREATE MESSAGE
       ========================= */
       if (!statusMessage) {
         const messages = await channel.messages.fetch({ limit: 10 });
@@ -122,9 +142,6 @@ module.exports = (client) => {
         ) || null;
       }
 
-      /* =========================
-         📤 SEND / EDIT
-      ========================= */
       if (!statusMessage) {
         statusMessage = await channel.send({
           embeds: [embed],
