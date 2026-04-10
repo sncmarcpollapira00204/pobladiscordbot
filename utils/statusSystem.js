@@ -5,6 +5,10 @@ const {
   EmbedBuilder
 } = require("discord.js");
 
+// ✅ IMPORTANT (for Node < 18)
+// Uncomment if needed:
+// const fetch = require("node-fetch");
+
 module.exports = (client) => {
 
   const STATUS_CHANNEL_ID = "1484857118757752913";
@@ -13,7 +17,7 @@ module.exports = (client) => {
   let lastPayload = "";
 
   /* =========================
-     🌐 SAFE FETCH (FIXED TIMEOUT)
+     🌐 SAFE FETCH
   ========================= */
   async function safeFetch(url) {
     try {
@@ -58,16 +62,16 @@ module.exports = (client) => {
       let maxPlayers = 600;
       let statusType = "offline";
 
-      // 🔥 API CHECK
-      const data = await safeFetch("https://servers-frontend.fivem.net/api/servers/single/6jabyd");
+      // ✅ ONLY FiveM API (FIXED)
+      const data = await safeFetch(
+        "https://servers-frontend.fivem.net/api/servers/single/6jabyd"
+      );
 
-      // 🔥 DIRECT CHECK (REAL)
-      const direct = await safeFetch("http://143.14.88.34:30120/info.json");
-
-      if (data?.Data && direct) {
+      if (data?.Data) {
         playerCount = data.Data.clients ?? 0;
         maxPlayers = data.Data.sv_maxclients ?? 600;
 
+        // smarter status logic
         if (playerCount === 0) {
           statusType = "starting";
         } else {
@@ -79,25 +83,19 @@ module.exports = (client) => {
 
       const statusText = formatStatus(statusType);
 
-      // 🔒 Anti spam edit
+      // 🔒 Anti-spam edit
       const payloadKey = `${statusType}-${playerCount}`;
       if (payloadKey === lastPayload) return;
       lastPayload = payloadKey;
 
       /* =========================
-         🎨 EMBED (FINAL POLISH)
+         🎨 EMBED
       ========================= */
       const embed = new EmbedBuilder()
         .setColor(0x2b2d31)
-
-        .setAuthor({
-          name: "Poblacion Roleplay"
-        })
-
+        .setAuthor({ name: "Poblacion Roleplay" })
         .setDescription("Developed and Maintained by Sxph")
-
         .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770157693075659/pgif2.gif")
-
         .addFields(
           {
             name: "STATUS",
@@ -114,9 +112,7 @@ module.exports = (client) => {
 │ connect poblacion.fivem.me`
           }
         )
-
         .setImage("https://cdn.discordapp.com/attachments/1475756977849237545/1491980601484513480/POBLACIONINTROVIDEO.gif")
-
         .setFooter({
           text: "txAdmin 8.0.1 • Updated every minute"
         });
