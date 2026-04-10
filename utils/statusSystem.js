@@ -92,30 +92,39 @@ module.exports = (client) => {
          🎨 EMBED
       ========================= */
       const embed = new EmbedBuilder()
-        .setColor(0x2b2d31)
-        .setAuthor({ name: "Poblacion Roleplay" })
-        .setDescription("Developed and Maintained by Sxph")
-        .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770157693075659/pgif2.gif")
-        .addFields(
-          {
-            name: "STATUS",
-            value: `│ ${statusText}\n│`
-          },
-          {
-            name: "PLAYERS",
-            value: `│ ${playerCount}/${maxPlayers}\n│`
-          },
-          {
-            name: "F8 CONNECT COMMAND",
-            value:
-`│ connect poblacion.fivem.ph
-│ connect poblacion.fivem.me`
-          }
+        .setColor(statusType === "online" ? 0x57F287 : statusType === "starting" ? 0xFEE75C : 0xED4245)
+
+        .setAuthor({
+          name: "Poblacion Roleplay",
+          iconURL: "https://cdn.discordapp.com/attachments/1469746646672867349/1469770055586676770/poblamain.png"
+        })
+
+        .setTitle(
+          statusType === "online"
+            ? "🟢 Server Online"
+            : statusType === "starting"
+            ? "🟠 Server Starting"
+            : "🔴 Server Offline"
         )
+
+        .setDescription(
+      `**Players:** ${playerCount}/${maxPlayers}
+
+      **Connect:**
+      \`\`\`
+      connect poblacion.fivem.ph
+      \`\`\``
+        )
+
+        .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770055586676770/poblamain.png")
+
         .setImage("https://cdn.discordapp.com/attachments/1475756977849237545/1491980601484513480/POBLACIONINTROVIDEO.gif")
+
         .setFooter({
-          text: "txAdmin 8.0.1 • Updated every minute"
-        });
+          text: "Updated every minute • Poblacion RP"
+        })
+
+        .setTimestamp();
 
       /* =========================
          🔘 BUTTON
