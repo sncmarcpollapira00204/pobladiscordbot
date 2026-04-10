@@ -93,12 +93,6 @@ const embed = new EmbedBuilder()
   `🟡 PENDING WHITELIST APPLICATION`
 )
 
-  // 👇 ADD THIS PART HERE
-    .addFields({
-      name: "\u200B",
-      value: `Character Name: ${characterName}\nSteam: ${steamProfile}`
-    })
-
   .setFooter({ text: "Poblacion City Roleplay" })
   .setTimestamp();
 

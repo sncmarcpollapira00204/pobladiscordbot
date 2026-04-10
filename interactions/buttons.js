@@ -9,9 +9,7 @@ const {
 const config = require("../config.json");
 const pool = require("../database");
 
-/* =========================
-   SAFE REPLY (FIX)
-========================= */
+/* SAFE REPLY */
 const safeReply = async (interaction, content) => {
   try {
     if (interaction.replied || interaction.deferred) {
@@ -32,19 +30,6 @@ const isAdmin = async (interaction) => {
   return member.roles.cache.some(role =>
     config.adminRoleIds.includes(role.id)
   );
-};
-
-/* GET CHARACTER NAME */
-const getCharacterName = (fields) => {
-  const field = fields.find(f => f.value?.includes("Character Name:"));
-  if (!field) return null;
-
-  return field.value
-    .split("Character Name:")[1]
-    .split("\n")[0]
-    .trim()
-    .replace(/[*_~`|]/g, "")
-    .slice(0, 32);
 };
 
 module.exports = async (interaction) => {
@@ -75,7 +60,6 @@ module.exports = async (interaction) => {
         new TextInputBuilder()
           .setCustomId("character_name")
           .setLabel("Character Name")
-          .setPlaceholder("Firstname Lastname")
           .setStyle(TextInputStyle.Short)
           .setRequired(true)
       ),
@@ -83,7 +67,6 @@ module.exports = async (interaction) => {
         new TextInputBuilder()
           .setCustomId("steam_profile")
           .setLabel("Steam Profile URL")
-          .setPlaceholder("https://steamcommunity.com/profiles/")
           .setStyle(TextInputStyle.Short)
           .setRequired(true)
       )
@@ -96,14 +79,14 @@ module.exports = async (interaction) => {
   if (!message.embeds.length) return;
 
   const embed = EmbedBuilder.from(message.embeds[0]);
-  const fields = embed.data.fields;
+  const desc = embed.data.description || "";
 
-  const statusField = fields.find(f =>
-    f.name === "\u200B" && f.value.includes("PENDING")
-  );
+  const isPending =
+    desc.includes("🟡 PENDING WHITELIST APPLICATION") ||
+    desc.includes("🔵 PENDING ADMIN REVIEW");
 
   /* =========================
-    VOUCH SYSTEM
+     VOUCH
   ========================= */
   if (interaction.customId === "vouch") {
 
@@ -111,83 +94,64 @@ module.exports = async (interaction) => {
       return safeReply(interaction, "❌ Only **Citizens** can vouch.");
     }
 
-    if (!statusField) {
+    if (!isPending) {
       return safeReply(interaction, "❌ Application is not pending.");
     }
 
-    const userField = fields.find(f => f.value?.includes("<@"));
-    const match = userField?.value.match(/<@(\d+)>/);
-
-    if (!match) {
+    // GET APPLICANT ID FROM DESCRIPTION
+    const userMatch = desc.match(/DISCORD USER: <@(\d+)>/);
+    if (!userMatch) {
       return safeReply(interaction, "❌ Failed to get applicant.");
     }
 
-    const applicantId = match[1];
+    const applicantId = userMatch[1];
 
     if (interaction.user.id === applicantId) {
       return safeReply(interaction, "❌ You cannot vouch yourself.");
     }
 
-    const vouchField = fields.find(f =>
-      f.name.toUpperCase().includes("VOUCHED BY")
-    );
+    // GET CURRENT VOUCHES
+    const vouchMatch = desc.match(/👥 \*\*VOUCHED BY:\*\* ([\s\S]*?)\n\n/);
+    let vouches = [];
 
-    if (!vouchField) {
-      return safeReply(interaction, "❌ Vouch field missing.");
+    if (vouchMatch && vouchMatch[1] !== "None") {
+      vouches = vouchMatch[1]
+        .split(/,\n|, /)
+        .map(v => v.replace(/[<@>]/g, ""));
     }
 
-    let vouches = vouchField.value === "None"
-      ? []
-      : vouchField.value.split(", ");
+    const userId = interaction.user.id;
 
-    const voucher = `<@${interaction.user.id}>`;
-
-    // 🔁 TOGGLE SYSTEM
-    if (vouches.includes(voucher)) {
-      vouches = vouches.filter(v => v !== voucher);
-      vouchField.value = vouches.length ? vouches.join(", ") : "None";
-
-      await message.edit({ embeds: [embed] });
-
-      try {
-        await pool.query(
-          "UPDATE whitelist SET vouchers = $1 WHERE discord_id = $2",
-          [vouchField.value, applicantId]
-        );
-      } catch (err) {
-        console.error("DB ERROR:", err);
-      }
-
-      return safeReply(interaction, "❌ Vouch removed.");
+    // TOGGLE
+    if (vouches.includes(userId)) {
+      vouches = vouches.filter(v => v !== userId);
+    } else {
+      vouches.push(userId);
     }
 
-    // ✅ ADD VOUCH
-    vouches.push(voucher);
-    const formattedVouches = vouches.length
-      ? vouches.join(",\n")
+    const formatted = vouches.length
+      ? vouches.map(id => `<@${id}>`).join(",\n")
       : "None";
 
-    if (vouches.length > 0) {
     embed.setDescription(
-    embed.data.description.replace(
-    /👥 \*\*VOUCHED BY:\*\*[\s\S]*?(🟡 PENDING WHITELIST APPLICATION|🔵 PENDING ADMIN REVIEW)/,
-    `👥 **VOUCHED BY:** ${formattedVouches}\n\n🔵 PENDING ADMIN REVIEW`
-        )
-      );
-    }
+      desc.replace(
+        /👥 \*\*VOUCHED BY:\*\*[\s\S]*?(🟡 PENDING WHITELIST APPLICATION|🔵 PENDING ADMIN REVIEW)/,
+        `👥 **VOUCHED BY:** ${formatted}\n\n🔵 PENDING ADMIN REVIEW`
+      )
+    );
 
     await message.edit({ embeds: [embed] });
 
     try {
       await pool.query(
         "UPDATE whitelist SET vouchers = $1 WHERE discord_id = $2",
-        [vouchField.value, applicantId]
+        [formatted, applicantId]
       );
     } catch (err) {
       console.error("DB ERROR:", err);
     }
 
-    return safeReply(interaction, "✅ Vouch added.");
+    return safeReply(interaction, "✅ Vouch updated.");
   }
 
   /* =========================
@@ -199,39 +163,40 @@ module.exports = async (interaction) => {
       return safeReply(interaction, "❌ No permission.");
     }
 
-    if (!statusField || !statusField.value.includes("PENDING")) {
+    if (!isPending) {
       return safeReply(interaction, "❌ Already handled.");
     }
 
-    const userField = fields.find(f => f.value?.includes("<@"));
-    const userId = userField?.value.match(/\d+/)?.[0];
+    const userMatch = desc.match(/DISCORD USER: <@(\d+)>/);
+    if (!userMatch) return;
 
-    const characterName = getCharacterName(fields);
+    const userId = userMatch[1];
+
+    const nameMatch = desc.match(/IN-GAME NAME: (.+)/);
+    const characterName = nameMatch ? nameMatch[1] : null;
 
     embed.setDescription(
-      embed.data.description.replace(
+      desc.replace(
         /🟡 PENDING WHITELIST APPLICATION|🔵 PENDING ADMIN REVIEW/,
         `✅ APPROVED BY: ${interaction.user}`
       )
     );
-
-    embed.addFields({
-      name: "✅ APPROVED BY",
-      value: `${interaction.user}`
-    });
 
     await message.edit({
       embeds: [embed],
       components: []
     });
 
-    const member = await interaction.guild.members.fetch(userId);
+    const member = await interaction.guild.members.fetch(userId).catch(() => null);
 
-    await member.roles.add(config.citizenRoleId).catch(() => {});
-
-    try {
-      await member.setNickname(characterName);
-    } catch {}
+    if (member) {
+      await member.roles.add(config.citizenRoleId).catch(() => {});
+      if (characterName) {
+        try {
+          await member.setNickname(characterName);
+        } catch {}
+      }
+    }
 
     return safeReply(interaction, "✅ Approved.");
   }
