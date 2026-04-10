@@ -10,7 +10,7 @@ const {
 
 module.exports = (client) => {
 
-  const STATUS_CHANNEL_ID = "1484857118757752913";
+  const STATUS_CHANNEL_ID = "1489366651911798865";
 
   let statusMessage = null;
   let lastPayload = "";
