@@ -79,32 +79,42 @@ module.exports = (client) => {
       lastPayload = payloadKey;
 
       // 🎨 EMBED
-      const embed = new EmbedBuilder()
-        .setColor(0x2b2d31)
-        .setAuthor({ name: "Poblacion Roleplay" })
-        .setDescription("Developed and Maintained by Sxph and RryBaN")
+const embed = new EmbedBuilder()
+  .setColor(0x2b2d31)
+  .setAuthor({ name: "Poblacion Roleplay" })
+  .setDescription("Developed and Maintained by Sxph and RryBaN")
 
-        .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770157693075659/pgif2.gif") // 👈 RIGHT SIDE
+  .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770157693075659/pgif2.gif")
 
-        .addFields(
-          { name: "STATUS", value: "🟢 Online" },
-          { name: "PLAYERS", value: `${playerCount}/${maxPlayers}` },
+  .addFields(
+    { name: "STATUS", value: "🟢 Online" },
+    { name: "PLAYERS", value: `${playerCount}/${maxPlayers}` },
 
-          { name: "\u200B", value: "\u200B" },
+    { name: "\u200B", value: "\u200B" },
 
-          {
-            name: "F8 CONNECT COMMAND",
-            value: "```bash\nconnect poblacion.fivem.ph\nconnect poblacion.fivem.me```"
-          },
+    {
+      name: "F8 CONNECT COMMAND",
+      value: "```bash\nconnect poblacion.fivem.ph\nconnect poblacion.fivem.me```"
+    },
 
-          { name: "NEXT RESTART", value: restartText },
-          { name: "UPTIME", value: uptime }
-        )
+    { name: "\u200B", value: "\u200B" },
 
-        .setImage("https://cdn.discordapp.com/attachments/1475756977849237545/1491980601484513480/POBLACIONINTROVIDEO.gif") // 👈 BOTTOM
+    {
+      name: "NEXT RESTART",
+      value: `in ${restartText}`
+    },
+    {
+      name: "UPTIME",
+      value: uptime
+    }
+  )
 
-        .setFooter({ text: "txAdmin • Updated every minute" })
-        .setTimestamp();
+  .setImage("https://cdn.discordapp.com/attachments/1475756977849237545/1491980601484513480/POBLACIONINTROVIDEO.gif")
+
+  .setFooter({
+    text: "txAdmin 8.0.1 • Updated every minute"
+  })
+  .setTimestamp();
 
       // 🔘 BUTTON
       const row = new ActionRowBuilder().addComponents(
