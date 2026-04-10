@@ -130,31 +130,30 @@ const embed = new EmbedBuilder()
 
   .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770055586676770/poblamain.png")
 
-  .addFields(
-    {
-      name: "STATUS",
-      value:
-`🟢 Online`
-    },
-    {
-      name: "PLAYERS",
-      value: `${playerCount}/${maxPlayers}`
-    },
-    {
-      name: "F8 CONNECT COMMAND",
-      value:
-`connect poblacion.fivem.ph
-connect poblacion.fivem.me`
-    },
-    {
-      name: "NEXT RESTART",
-      value: getRestartCountdown()
-    },
-    {
-      name: "UPTIME",
-      value: `${hours} hrs, ${minutes} mins`
-    }
-  )
+.addFields(
+  {
+    name: "STATUS",
+    value: "│ 🟢 Online\n│",
+  },
+  {
+    name: "PLAYERS",
+    value: `│ ${playerCount}/${maxPlayers}\n│`,
+  },
+  {
+    name: "F8 CONNECT COMMAND",
+    value:
+`│ connect poblacion.fivem.ph
+│ connect poblacion.fivem.me`,
+  },
+  {
+    name: "NEXT RESTART",
+    value: `│ ${getRestartCountdown()}\n│`,
+  },
+  {
+    name: "UPTIME",
+    value: `│ ${hours} hrs, ${minutes} mins`,
+  }
+)
 
   .setImage("https://cdn.discordapp.com/attachments/1475756977849237545/1491980601484513480/POBLACIONINTROVIDEO.gif")
 
