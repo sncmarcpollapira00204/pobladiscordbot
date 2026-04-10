@@ -121,31 +121,35 @@ module.exports = (client) => {
 
         .setThumbnail("https://cdn.discordapp.com/attachments/1469746646672867349/1469770157693075659/pgif2.gif")
 
-      .addFields(
-        {
-          name: "> STATUS",
-          value: "```🟢 Online```"
-        },
-        {
-          name: "> PLAYERS",
-          value: `\`\`\`${playerCount}/${maxPlayers}\`\`\``
-        },
-        {
-          name: "> F8 CONNECT COMMAND",
-          value: "```bash\nconnect poblacion.fivem.ph\nconnect poblacion.fivem.me\nconnect 143.14.88.34```"
-        },
+.addFields(
+  {
+    name: "STATUS",
+    value: "```🟢 Online```"
+  },
+  {
+    name: "PLAYERS",
+    value: `\`\`\`${playerCount}/${maxPlayers}\`\`\``
+  },
 
-          { name: "\u200B", value: "\u200B" },
+  { name: "\u200B", value: "\u200B" },
 
-          {
-            name: "NEXT RESTART",
-            value: `in ${restartText}`
-          },
-          {
-            name: "UPTIME",
-            value: uptime
-          }
-        )
+  {
+    name: "F8 CONNECT COMMAND",
+    value:
+"```connect poblacion.fivem.ph\nconnect poblacion.fivem.me\nconnect 143.14.88.34```"
+  },
+
+  { name: "\u200B", value: "\u200B" },
+
+  {
+    name: "NEXT RESTART",
+    value: `\`\`\`in ${restartText}\`\`\``
+  },
+  {
+    name: "UPTIME",
+    value: `\`\`\`${uptime}\`\`\``
+  }
+)
 
         .setImage("https://cdn.discordapp.com/attachments/1475756977849237545/1491980601484513480/POBLACIONINTROVIDEO.gif")
 
