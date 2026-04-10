@@ -98,7 +98,11 @@ module.exports = async (interaction) => {
           { name: "IN-GAME NAME", value: ingameName },
           { name: "CURRENT ROLE", value: roleName },
           { name: "COOLDOWN AGREEMENT", value: agree },
-          { name: "STATUS", value: "🟡 PENDING REVIEW" }
+
+          // ✅ IDAGDAG MO ITO
+          { name: "PATRON/A APPROVAL", value: "❌ NOT APPROVED" },
+
+          { name: "STATUS", value: "🟡 WAITING FOR PATRON APPROVAL" }
         )
         .setFooter({ text: `GANG_UNROLE | ${interaction.user.id}` });
 
@@ -525,8 +529,12 @@ module.exports = async (interaction) => {
 
         const newEmbed = EmbedBuilder.from(embed)
           .spliceFields(4, 1, {
+            name: "PATRON/A APPROVAL",
+            value: `✅ VERIFIED BY: ${interaction.user}`
+          })
+          .spliceFields(5, 1, {
             name: "STATUS",
-            value: `☑️ VERIFIED BY: ${interaction.user}`
+            value: "🔵 READY FOR ADMIN APPROVAL"
           });
 
       const newRow = new ActionRowBuilder().addComponents(
@@ -558,9 +566,9 @@ module.exports = async (interaction) => {
     ========================= */
     if (interaction.customId === "gang_unrole_approve") {
 
-      const statusField = embed.fields.find(f => f.name === "STATUS");
+      const approvalField = embed.fields.find(f => f.name === "PATRON/A APPROVAL");
 
-      if (!statusField || !statusField.value.includes("VERIFIED")) {
+      if (!approvalField || !approvalField.value.includes("VERIFIED")) {
         return interaction.reply({
           content: "❌ This request is not verified yet.",
           flags: 64
@@ -626,44 +634,49 @@ module.exports = async (interaction) => {
       return interaction.reply({ content: "✅ Unrole approved.", flags: 64 });
     }
 
-    if (interaction.customId === "gang_unrole_unverify") {
+if (interaction.customId === "gang_unrole_unverify") {
 
-        const statusField = embed.fields.find(f => f.name === "STATUS");
+  const approvalField = embed.fields.find(f => f.name === "PATRON/A APPROVAL");
 
-        if (!statusField.value.includes(`<@${interaction.user.id}>`)) {
-          return interaction.reply({
-            content: "❌ Only the verifier can remove this.",
-            flags: 64
-          });
-        }
+  if (!approvalField || !approvalField.value.includes(`<@${interaction.user.id}>`)) {
+    return interaction.reply({
+      content: "❌ Only the verifier can remove this.",
+      flags: 64
+    });
+  }
 
-        const newEmbed = EmbedBuilder.from(embed)
-          .spliceFields(4, 1, {
-            name: "STATUS",
-            value: "🟡 PENDING REVIEW"
-          });
+  const newEmbed = EmbedBuilder.from(embed)
+    .spliceFields(4, 1, {
+      name: "PATRON/A APPROVAL",
+      value: "❌ NOT APPROVED"
+    })
+    .spliceFields(5, 1, {
+      name: "STATUS",
+      value: "🟡 WAITING FOR PATRON APPROVAL"
+    });
 
-        const newRow = new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId("gang_unrole_verify")
-            .setLabel("VERIFY")
-            .setStyle(ButtonStyle.Primary),
+  const newRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("gang_unrole_verify")
+      .setLabel("VERIFY")
+      .setStyle(ButtonStyle.Primary),
 
-          new ButtonBuilder()
-            .setCustomId("gang_unrole_approve")
-            .setLabel("APPROVE")
-            .setStyle(ButtonStyle.Success),
+    new ButtonBuilder()
+      .setCustomId("gang_unrole_approve")
+      .setLabel("APPROVE")
+      .setStyle(ButtonStyle.Success),
 
-          new ButtonBuilder()
-            .setCustomId("gang_unrole_deny")
-            .setLabel("DENY")
-            .setStyle(ButtonStyle.Danger)
-        );
+    new ButtonBuilder()
+      .setCustomId("gang_unrole_deny")
+      .setLabel("DENY")
+      .setStyle(ButtonStyle.Danger)
+  );
 
-        await interaction.message.edit({ embeds: [newEmbed], components: [newRow] });
+  await interaction.message.edit({ embeds: [newEmbed], components: [newRow] });
 
-        return interaction.reply({ content: "⚠️ Verification removed.", flags: 64 });
-      }
+  return interaction.reply({ content: "⚠️ Verification removed.", flags: 64 });
+}
+
     /* =========================
        UNROLE DENY
     ========================= */
