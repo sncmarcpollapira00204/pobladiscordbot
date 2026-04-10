@@ -7,7 +7,7 @@ const {
 
 // ✅ IMPORTANT (for Node < 18)
 // Uncomment if needed:
-// const fetch = require("node-fetch");
+const fetch = require("node-fetch");
 
 module.exports = (client) => {
 
