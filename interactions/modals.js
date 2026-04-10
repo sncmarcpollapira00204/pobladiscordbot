@@ -24,14 +24,7 @@ module.exports = async (interaction) => {
     await interaction.deferReply({ flags: 64 }); // prevent timeout
 
     const characterName = interaction.fields.getTextInputValue("character_name");
-    const age = interaction.fields.getTextInputValue("age");
     const steamProfile = interaction.fields.getTextInputValue("steam_profile");
-
-    /* VALIDATION */
-
-    if (isNaN(age)) {
-      return interaction.editReply("❌ Character age must be a number.");
-    }
 
     if (
       !steamProfile.startsWith("https://steamcommunity.com/id/") &&
