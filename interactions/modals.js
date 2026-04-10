@@ -76,8 +76,11 @@ module.exports = async (interaction) => {
     /* EMBED */
 
 const embed = new EmbedBuilder()
-  .setColor(0xff8c00)
+
+.setColor(0xff8c00)
 .setTitle("NEW WHITELIST APPLICATION")
+
+.setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
 
 .setDescription(
   `👤 **APPLICANT INFORMATION:**\n` +
