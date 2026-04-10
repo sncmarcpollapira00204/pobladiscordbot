@@ -93,7 +93,7 @@ const embed = new EmbedBuilder()
   `ACCOUNT AGE: ${accountAge}\n\n` +
 
   `🎭 **CHARACTER DETAILS:**\n` +
-  `IN-GAME NAME: ${characterName}\n` +
+  `IN-GAME NAME: **\`${characterName}\`**\n` +
   `STEAM LINK: [Steam Profile](${steamProfile})\n\n` +
 
   `👥 **VOUCHED BY:** None\n\n` +

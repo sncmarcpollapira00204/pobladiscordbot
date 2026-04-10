@@ -133,10 +133,14 @@ module.exports = async (interaction) => {
       ? vouches.map(id => `<@${id}>`).join(",\n")
       : "None";
 
+    const statusText = vouches.length > 0
+      ? "🔵 PENDING ADMIN REVIEW"
+      : "🟡 PENDING WHITELIST APPLICATION";
+
     embed.setDescription(
       desc.replace(
         /👥 \*\*VOUCHED BY:\*\*[\s\S]*?(🟡 PENDING WHITELIST APPLICATION|🔵 PENDING ADMIN REVIEW)/,
-        `👥 **VOUCHED BY:** ${formatted}\n\n🔵 PENDING ADMIN REVIEW`
+        `👥 **VOUCHED BY:** ${formatted}\n\n${statusText}`
       )
     );
 
