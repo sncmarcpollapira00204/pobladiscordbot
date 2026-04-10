@@ -90,7 +90,7 @@ client.once(Events.ClientReady, async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 
   startStatusSystem(client);
-  const restartChannel = "1470750976368578630";
+  const restartChannel = "1484857118757752913";
 
   try {
     const channel = await client.channels.fetch(restartChannel);
