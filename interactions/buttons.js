@@ -134,8 +134,8 @@ module.exports = async (interaction) => {
       : "None";
 
     const statusText = vouches.length > 0
-      ? "🔵 PENDING ADMIN REVIEW"
-      : "🟡 PENDING WHITELIST APPLICATION";
+      ? `🔵 PENDING ADMIN REVIEW\n_Application has received vouches and is awaiting admin approval._`
+      : `🟡 PENDING WHITELIST APPLICATION\n_Waiting for citizen vouches..._`;
 
     embed.setDescription(
       desc.replace(
