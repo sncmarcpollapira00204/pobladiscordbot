@@ -167,11 +167,6 @@ const embed = new EmbedBuilder()
       )
     );
 
-    embed.addFields(
-      { name: "❌ **DENIED BY**", value: `${interaction.user}` },
-      { name: "📄 **DENIAL REASON**", value: reason }
-    );
-
     embed.setColor("#e74c3c"); // STATUS COLOR
 
 
