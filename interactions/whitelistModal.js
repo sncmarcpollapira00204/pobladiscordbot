@@ -26,7 +26,6 @@ module.exports = () => {
 
   modal.addComponents(
     new ActionRowBuilder().addComponents(characterName),
-    new ActionRowBuilder().addComponents(age),
     new ActionRowBuilder().addComponents(steamProfile)
   );
 

@@ -148,20 +148,24 @@ const embed = new EmbedBuilder()
     }
 
     const embed = EmbedBuilder.from(message.embeds[0]);
-    const fields = embed.data.fields;
+    const desc = embed.data.description || "";
 
-    const statusField = fields.find(field =>
-      field.value?.includes("PENDING REVIEW")
-    );
-
-    if (!statusField) {
+    if (
+      !desc.includes("PENDING WHITELIST APPLICATION") &&
+      !desc.includes("PENDING ADMIN REVIEW")
+    ) {
       return interaction.reply({
         content: "❌ This application can no longer be denied.",
         flags: 64
       });
     }
 
-    statusField.value = "❌ **DENIED**";
+    embed.setDescription(
+      desc.replace(
+        /🟡 PENDING WHITELIST APPLICATION|🔵 PENDING ADMIN REVIEW/,
+        `❌ DENIED BY: ${interaction.user}`
+      )
+    );
 
     embed.addFields(
       { name: "❌ **DENIED BY**", value: `${interaction.user}` },
