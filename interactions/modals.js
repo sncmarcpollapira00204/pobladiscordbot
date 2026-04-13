@@ -150,6 +150,7 @@ const embed = new EmbedBuilder()
     const embed = EmbedBuilder.from(message.embeds[0]);
     const desc = embed.data.description || "";
 
+    /* CHECK */
     if (
       !desc.includes("PENDING WHITELIST APPLICATION") &&
       !desc.includes("PENDING ADMIN REVIEW")
@@ -160,6 +161,7 @@ const embed = new EmbedBuilder()
       });
     }
 
+    /* UPDATE DESCRIPTION */
     embed.setDescription(
       desc.replace(
         /🟡 PENDING WHITELIST APPLICATION|🔵 PENDING ADMIN REVIEW/,
@@ -167,9 +169,18 @@ const embed = new EmbedBuilder()
       )
     );
 
-    embed.setColor("#e74c3c"); // STATUS COLOR
+    /* 🔥 IMPORTANT: CLEAR OLD FIELDS FIRST */
+    embed.setFields([]);
 
+    /* ADD FIELDS */
+    embed.addFields(
+      { name: "📄 **DENIAL REASON**", value: reason || "No reason provided." }
+    );
 
+    /* COLOR */
+    embed.setColor("#e74c3c");
+
+    /* APPLY */
     await message.edit({
       embeds: [embed],
       components: []
