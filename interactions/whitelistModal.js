@@ -13,7 +13,7 @@ module.exports = () => {
   const characterName = new TextInputBuilder()
     .setCustomId("character_name")
     .setLabel("Character Name")
-    .setPlaceholder("Firstname Lastname")
+    .setPlaceholder("Firstname Lastname") 
     .setStyle(TextInputStyle.Short)
     .setRequired(true);
 

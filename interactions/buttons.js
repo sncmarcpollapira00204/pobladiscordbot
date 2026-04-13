@@ -60,6 +60,7 @@ module.exports = async (interaction) => {
         new TextInputBuilder()
           .setCustomId("character_name")
           .setLabel("Character Name")
+          .setPlaceholder("Firstname Lastname")
           .setStyle(TextInputStyle.Short)
           .setRequired(true)
       ),
@@ -67,6 +68,7 @@ module.exports = async (interaction) => {
         new TextInputBuilder()
           .setCustomId("steam_profile")
           .setLabel("Steam Profile URL")
+          .setPlaceholder("https://steamcommunity.com/profiles/")
           .setStyle(TextInputStyle.Short)
           .setRequired(true)
       )
@@ -134,8 +136,8 @@ module.exports = async (interaction) => {
       : "None";
 
     const statusText = vouches.length > 0
-      ? `🔵 PENDING ADMIN REVIEW\n_Application has received vouches and is awaiting admin approval._`
-      : `🟡 PENDING WHITELIST APPLICATION\n_Waiting for citizen vouches..._`;
+      ? "🔵 PENDING ADMIN REVIEW"
+      : "🟡 PENDING WHITELIST APPLICATION";
 
     embed.setDescription(
       desc.replace(
@@ -179,7 +181,7 @@ module.exports = async (interaction) => {
 
     const userId = userMatch[1];
 
-    const nameMatch = desc.match(/IN-GAME NAME: (.+)/);
+    const nameMatch = desc.match(/IN-GAME NAME: \*\*`(.+?)`\*\*/);
     const characterName = nameMatch ? nameMatch[1] : null;
 
     embed.setDescription(

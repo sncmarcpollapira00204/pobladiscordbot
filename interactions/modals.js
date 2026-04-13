@@ -98,8 +98,7 @@ const embed = new EmbedBuilder()
 
   `👥 **VOUCHED BY:** None\n\n` +
 
-  `🟡 PENDING WHITELIST APPLICATION\n` +
-  `_Waiting for citizen vouches..._`
+  `🟡 PENDING WHITELIST APPLICATION`
 )
 
   .setFooter({ text: "Poblacion City Roleplay" })
