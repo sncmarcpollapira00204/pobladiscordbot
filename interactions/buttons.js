@@ -83,9 +83,7 @@ module.exports = async (interaction) => {
   const embed = EmbedBuilder.from(message.embeds[0]);
   const desc = embed.data.description || "";
 
-  const isPending =
-    desc.includes("🟡 PENDING WHITELIST APPLICATION") ||
-    desc.includes("🔵 PENDING ADMIN REVIEW");
+  const isPending = /PENDING/i.test(desc);
 
   /* =========================
      VOUCH

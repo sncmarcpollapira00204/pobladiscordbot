@@ -88,17 +88,19 @@ const embed = new EmbedBuilder()
 .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
 
 .setDescription(
-  `👤 **APPLICANT INFORMATION:**\n` +
-  `DISCORD USER: ${interaction.user}\n` +
-  `ACCOUNT AGE: ${accountAge}\n\n` +
+`👤 **APPLICANT INFORMATION:**
 
-  `🎭 **CHARACTER DETAILS:**\n` +
-  `IN-GAME NAME: **\`${characterName}\`**\n` +
-  `STEAM LINK: [Steam Profile](${steamProfile})\n\n` +
+DISCORD USER: ${interaction.user}
+ACCOUNT AGE: ${accountAge}
 
-  `👥 **VOUCHED BY:** None\n\n` +
+🎭 **CHARACTER DETAILS:**
 
-  `🟡 PENDING WHITELIST APPLICATION`
+IN-GAME NAME: \`${characterName}\`
+STEAM LINK: [Steam Profile](${steamProfile})
+
+👥 **VOUCHED BY:** None
+
+🟡 PENDING WHITELIST APPLICATION`
 )
 
   .setFooter({ text: "Poblacion City Roleplay" })
