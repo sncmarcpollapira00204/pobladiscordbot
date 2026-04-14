@@ -12,41 +12,29 @@ const pool = require("../database");
 /* SAFE REPLY */
 const safeReply = async (interaction, content) => {
   try {
-    if (interaction.replied || interaction.deferred) {
+    if (interaction.deferred || interaction.replied) {
       return await interaction.editReply({ content });
     } else {
       return await interaction.reply({ content, flags: 64 });
     }
-  } catch (err) {
-    console.error("Reply failed:", err);
-  }
+  } catch {}
 };
 
 /* ADMIN CHECK */
 const isAdmin = async (interaction) => {
   if (interaction.guild.ownerId === interaction.user.id) return true;
-
   const member = await interaction.guild.members.fetch(interaction.user.id);
-  return member.roles.cache.some(role =>
-    config.adminRoleIds.includes(role.id)
-  );
+  return config.adminRoleIds.some(id => member.roles.cache.has(id));
 };
 
 module.exports = async (interaction) => {
   if (!interaction.isButton()) return;
 
-  const whitelistButtons = [
-    "open_whitelist_modal",
-    "vouch",
-    "approve",
-    "deny"
-  ];
-
-  if (!whitelistButtons.includes(interaction.customId)) return;
+  const allowed = ["open_whitelist_modal", "vouch", "approve", "deny"];
+  if (!allowed.includes(interaction.customId)) return;
 
   /* OPEN MODAL */
   if (interaction.customId === "open_whitelist_modal") {
-
     if (interaction.member.roles.cache.has(config.citizenRoleId)) {
       return safeReply(interaction, "❌ You are already a **CITIZEN**.");
     }
@@ -60,7 +48,6 @@ module.exports = async (interaction) => {
         new TextInputBuilder()
           .setCustomId("character_name")
           .setLabel("Character Name")
-          .setPlaceholder("Firstname Lastname")
           .setStyle(TextInputStyle.Short)
           .setRequired(true)
       ),
@@ -68,7 +55,6 @@ module.exports = async (interaction) => {
         new TextInputBuilder()
           .setCustomId("steam_profile")
           .setLabel("Steam Profile URL")
-          .setPlaceholder("https://steamcommunity.com/profiles/")
           .setStyle(TextInputStyle.Short)
           .setRequired(true)
       )
@@ -83,11 +69,16 @@ module.exports = async (interaction) => {
   const embed = EmbedBuilder.from(message.embeds[0]);
   const desc = embed.data.description || "";
 
+  // ✅ SAFE USER ID (NO MORE REGEX)
+  const footer = embed.data.footer?.text;
+  if (!footer || !footer.startsWith("UID:")) {
+    return safeReply(interaction, "❌ Invalid application.");
+  }
+  const applicantId = footer.replace("UID:", "");
+
   const isPending = /PENDING/i.test(desc);
 
-  /* =========================
-     VOUCH
-  ========================= */
+  /* ========================= VOUCH ========================= */
   if (interaction.customId === "vouch") {
 
     if (!interaction.member.roles.cache.has(config.citizenRoleId)) {
@@ -98,72 +89,57 @@ module.exports = async (interaction) => {
       return safeReply(interaction, "❌ Application is not pending.");
     }
 
-    // GET APPLICANT ID FROM DESCRIPTION
-    const userMatch = desc.match(/DISCORD USER: <@(\d+)>/);
-    if (!userMatch) {
-      return safeReply(interaction, "❌ Failed to get applicant.");
-    }
-
-    const applicantId = userMatch[1];
-
     if (interaction.user.id === applicantId) {
       return safeReply(interaction, "❌ You cannot vouch yourself.");
     }
 
-    // GET CURRENT VOUCHES
-    const vouchMatch = desc.match(/👥 \*\*VOUCHED BY:\*\* ([\s\S]*?)\n\n/);
     let vouches = [];
 
-    if (vouchMatch && vouchMatch[1] !== "None") {
-      vouches = vouchMatch[1]
-        .split(/,\n|, /)
-        .map(v => v.replace(/[<@>]/g, ""));
-    }
+    try {
+      const res = await pool.query(
+        "SELECT vouchers FROM whitelist WHERE discord_id = $1",
+        [applicantId]
+      );
+
+      if (res.rows.length && res.rows[0].vouchers !== "None") {
+        vouches = res.rows[0].vouchers.split(",");
+      }
+    } catch {}
 
     const userId = interaction.user.id;
 
-    // TOGGLE
     if (vouches.includes(userId)) {
-      vouches = vouches.filter(v => v !== userId);
+      vouches = vouches.filter(id => id !== userId);
     } else {
       vouches.push(userId);
     }
 
-    const formatted = vouches.length
-      ? vouches.map(id => `<@${id}>`).join(",\n")
-      : "None";
+    const dbValue = vouches.length ? vouches.join(",") : "None";
 
-    const statusText = vouches.length > 0
-      ? "🔵 PENDING ADMIN REVIEW"
-      : "🟡 PENDING WHITELIST APPLICATION";
+    await pool.query(
+      "UPDATE whitelist SET vouchers = $1 WHERE discord_id = $2",
+      [dbValue, applicantId]
+    );
+
+    const formatted = vouches.length
+      ? vouches.map(id => `<@${id}>`).join(", ")
+      : "None";
 
     embed.setDescription(
       desc.replace(
-        /👥 \*\*VOUCHED BY:\*\*[\s\S]*?(🟡 PENDING WHITELIST APPLICATION|🔵 PENDING ADMIN REVIEW)/,
-        `👥 **VOUCHED BY:** ${formatted}\n\n${statusText}`
+        /👥 \*\*VOUCHED BY:\*\*[\s\S]*?\n\n/,
+        `👥 **VOUCHED BY:** ${formatted}\n\n`
       )
     );
 
-    // COLOR STATUS
     embed.setColor("#3498db");
 
     await message.edit({ embeds: [embed] });
 
-    try {
-      await pool.query(
-        "UPDATE whitelist SET vouchers = $1 WHERE discord_id = $2",
-        [formatted, applicantId]
-      );
-    } catch (err) {
-      console.error("DB ERROR:", err);
-    }
-
     return safeReply(interaction, "✅ Vouch updated.");
   }
 
-  /* =========================
-     APPROVE
-  ========================= */
+  /* ========================= APPROVE ========================= */
   if (interaction.customId === "approve") {
 
     if (!(await isAdmin(interaction))) {
@@ -174,13 +150,10 @@ module.exports = async (interaction) => {
       return safeReply(interaction, "❌ Already handled.");
     }
 
-    const userMatch = desc.match(/DISCORD USER: <@(\d+)>/);
-    if (!userMatch) return;
-
-    const userId = userMatch[1];
-
-    const nameMatch = desc.match(/IN-GAME NAME: \*\*`(.+?)`\*\*/);
-    const characterName = nameMatch ? nameMatch[1] : null;
+    await pool.query(
+      "UPDATE whitelist SET status = 'approved' WHERE discord_id = $1",
+      [applicantId]
+    );
 
     embed.setDescription(
       desc.replace(
@@ -189,7 +162,6 @@ module.exports = async (interaction) => {
       )
     );
 
-    // STATUS COLOR GREEN
     embed.setColor("#2ecc71");
 
     await message.edit({
@@ -197,23 +169,16 @@ module.exports = async (interaction) => {
       components: []
     });
 
-    const member = await interaction.guild.members.fetch(userId).catch(() => null);
+    const member = await interaction.guild.members.fetch(applicantId).catch(() => null);
 
     if (member) {
       await member.roles.add(config.citizenRoleId).catch(() => {});
-      if (characterName) {
-        try {
-          await member.setNickname(characterName);
-        } catch {}
-      }
     }
 
     return safeReply(interaction, "✅ Approved.");
   }
 
-  /* =========================
-     DENY
-  ========================= */
+  /* ========================= DENY ========================= */
   if (interaction.customId === "deny") {
 
     if (!(await isAdmin(interaction))) {

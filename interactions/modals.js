@@ -71,6 +71,54 @@ module.exports = async (interaction) => {
     const diffMonths = Math.floor((diffDays % 365) / 30);
     const accountAge = `${diffYears} year(s), ${diffMonths} month(s)`;
 
+    // AUTO DENY IF ACCOUNT < 3 MONTHS
+  if (diffMonths < 3 && diffYears === 0) {
+
+  const embed = new EmbedBuilder()
+
+    .setColor("#e74c3c")
+    .setAuthor({
+      name: "POBLACION WHITELIST SYSTEM",
+      iconURL: interaction.guild.iconURL({ dynamic: true })
+    })
+
+    .setTitle("NEW WHITELIST APPLICATION")
+
+    .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
+
+    .setDescription(
+    `👤 **APPLICANT INFORMATION:**
+
+    DISCORD USER: ${interaction.user}
+    ACCOUNT AGE: ${accountAge}
+
+    🎭 **CHARACTER DETAILS:**
+
+    IN-GAME NAME: \`${characterName}\`
+    STEAM LINK: [Steam Profile](${steamProfile})
+
+    👥 **VOUCHED BY:** None
+
+    ❌ DENIED BY: Gatekeeper`
+        )
+
+        .addFields({
+          name: "📄 **DENIAL REASON**",
+          value: "Account must be at least 3 months old to apply."
+        })
+
+        .setFooter({ text: `UID:${interaction.user.id}` })
+        .setTimestamp();
+
+      const channel = interaction.client.channels.cache.get(config.whitelistChannelId);
+
+      if (channel) {
+        await channel.send({ embeds: [embed] });
+      }
+
+      return interaction.editReply("❌ Your account must be at least 3 months old to apply.");
+    }
+
     const SPACE = "\u200B";
 
     /* EMBED */
@@ -103,7 +151,7 @@ STEAM LINK: [Steam Profile](${steamProfile})
 🟡 PENDING WHITELIST APPLICATION`
 )
 
-  .setFooter({ text: "Poblacion City Roleplay" })
+  .setFooter({ text: `UID:${interaction.user.id}` })
   .setTimestamp();
 
     /* BUTTONS */
