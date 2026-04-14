@@ -18,14 +18,7 @@ const {
 
 const namechangeHandler = require("./interactions/namechange");
 const startStatusSystem = require("./utils/statusSystem");
-
-// GANG
-const gangSelectHandler = require("./interactions/gangSelect");
-const gangRequestHandler = require("./interactions/gangRequest");
-
-// ✅ JOB (ADDED ONLY — walang binago sa iba)
-const jobSelectHandler = require("./interactions/jobSelect");
-const jobRequestHandler = require("./interactions/jobRequest");
+const roleRequestHandler = require("./interactions/roleRequest");
 
 /* ===============================
    CLIENT SETUP
@@ -48,15 +41,13 @@ process.on("uncaughtException", console.error);
 =============================== */
 
 const buttonHandlers = [
-  gangRequestHandler, // 🔥 PRIORITY FIRST
-  jobRequestHandler,  // ✅ ADD (job buttons)
+  roleRequestHandler,
   require("./interactions/buttons"),
   require("./interactions/noVoucherButtons")
 ];
 
 const modalHandlers = [
-  gangRequestHandler, // 🔥 PRIORITY FIRST
-  jobRequestHandler,  // ✅ ADD (job modals)
+  roleRequestHandler,
   require("./interactions/modals"),
   require("./interactions/noVoucherModal"),
   require("./interactions/revokeModal")
@@ -90,7 +81,7 @@ client.once(Events.ClientReady, async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 
   startStatusSystem(client);
-  const restartChannel = "1484857118757752913";
+  const restartChannel = "1470750976368578630";
 
   try {
     const channel = await client.channels.fetch(restartChannel);
