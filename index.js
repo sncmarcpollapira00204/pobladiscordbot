@@ -109,13 +109,8 @@ client.on(Events.InteractionCreate, async interaction => {
     ========================= */
     if (interaction.isStringSelectMenu()) {
 
-      // GANG
-      await gangSelectHandler(interaction);
-      if (interaction.replied || interaction.deferred) return;
-
-      // ✅ JOB
-      await jobSelectHandler(interaction);
-      if (interaction.replied || interaction.deferred) return;
+await roleRequestHandler(interaction);
+if (interaction.replied || interaction.deferred) return;
 
       return;
     }
