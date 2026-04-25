@@ -53,7 +53,10 @@ module.exports = {
         return words.some(word => lower.includes(word));
       });
 
-      const context = matched.slice(0, 25).join("\n");
+        const context =
+        matched.length > 0
+            ? matched.slice(0, 25).join("\n")
+            : rules.slice(0, 1500); // fallback
 
         const prompt = `
         You are a STRICT rule judge.
@@ -86,8 +89,11 @@ module.exports = {
         max_tokens: 400
       });
 
-      const aiReply =
-        completion.choices?.[0]?.message?.content || "No response.";
+        let aiReply = completion.choices?.[0]?.message?.content;
+
+        if (!aiReply || aiReply.trim() === "") {
+        aiReply = "❌ No clear rule found. Please contact staff.";
+        }
 
       // 🧱 EMBED
       const embed = new EmbedBuilder()
@@ -97,7 +103,7 @@ module.exports = {
           { name: "❓ Question", value: questionRaw },
           { name: "💡 Answer", value: aiReply.slice(0, 1024) }
         )
-        .setFooter({ text: "Powered by AI Support System" })
+        .setFooter({ text: "Powered by GwenAI Support" })
         .setTimestamp();
 
       await interaction.editReply({ embeds: [embed] });
