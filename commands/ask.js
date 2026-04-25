@@ -55,21 +55,26 @@ module.exports = {
 
       const context = matched.slice(0, 25).join("\n");
 
-      const prompt = `
-You are a roleplay server support assistant.
+        const prompt = `
+        You are a STRICT rule judge.
 
-Use the rules below as your MAIN reference:
+        Answer format MUST be:
 
-${context || rules.slice(0, 1500)}
+        Verdict: (OO / HINDI / DEPENDE)
+        Basis: (copy exact lines from rules)
 
-Instructions:
-- Answer clearly and naturally (Taglish allowed)
-- Keep it short and clean
-- Do NOT invent strict rules
+        RULES:
+        ${context}
 
-Question:
-${questionRaw}
-`;
+        INSTRUCTIONS:
+        - DO NOT explain beyond rules
+        - DO NOT invent anything
+        - ONLY use given rules
+        - If no clear rule → Verdict: DEPENDE
+
+        Question:
+        ${question}
+        `;
 
       const completion = await groq.chat.completions.create({
         model: "openai/gpt-oss-120b",
