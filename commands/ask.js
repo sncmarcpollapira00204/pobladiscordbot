@@ -18,7 +18,8 @@ module.exports = {
 
   async execute(interaction) {
     const userId = interaction.user.id;
-    const question = interaction.options.getString("question").toLowerCase();
+    const questionRaw = interaction.options.getString("question");
+    const question = questionRaw.toLowerCase();
 
     // ⏳ cooldown
     if (cooldown.has(userId)) {
@@ -32,7 +33,6 @@ module.exports = {
     }
     cooldown.set(userId, Date.now() + 5000);
 
-    // ❌ no API key
     if (!process.env.GROQ_API_KEY) {
       return interaction.reply({
         content: "❌ Groq API key not set.",
@@ -43,40 +43,45 @@ module.exports = {
     try {
       await interaction.deferReply();
 
-      // 🔍 FILTER RULES (FIX SA TOKEN LIMIT)
+      // 🔍 SMART MATCHING
       const lines = rules.split("\n");
+      const words = question.split(" ");
 
-      const matched = lines.filter(line =>
-        line.toLowerCase().includes(question)
-      );
+      const matched = lines.filter(line => {
+        const lower = line.toLowerCase();
 
-      const context = matched.slice(0, 20).join("\n");
+        return words.some(word => lower.includes(word));
+      });
 
-      // ❌ NO MATCH
-      if (!context) {
-        return interaction.editReply("❌ No matching rule found.");
-      }
+      const context = matched.slice(0, 25).join("\n");
 
-      // 🧠 SMALL PROMPT LANG (NO MORE 413 ERROR)
+      // 🧠 SMART PROMPT (BALANCED AI)
       const prompt = `
-Use ONLY this information:
+You are a roleplay server support assistant.
 
-${context}
+Use the rules below as your MAIN reference:
 
-If answer not found, say: "Please contact staff."
+${context || rules.slice(0, 1500)}
 
-Question:
-${question}
+Instructions:
+- Answer clearly and naturally (Taglish allowed)
+- If rules are relevant → use them
+- If partially related → explain properly
+- If not found → give best helpful answer WITHOUT inventing fake rules
+- Keep it short and easy to understand
+
+User question:
+${questionRaw}
 `;
 
       const completion = await groq.chat.completions.create({
         model: "openai/gpt-oss-120b",
         messages: [
-          { role: "system", content: "Answer only from given rules." },
+          { role: "system", content: "You are a helpful RP server assistant." },
           { role: "user", content: prompt }
         ],
-        temperature: 0.2,
-        max_tokens: 300
+        temperature: 0.4,
+        max_tokens: 400
       });
 
       const aiReply =
