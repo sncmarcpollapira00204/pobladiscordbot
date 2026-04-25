@@ -56,7 +56,7 @@ ${question}
 `;
 
       const completion = await groq.chat.completions.create({
-        model: "llama3-70b-8192",
+        model: "llama3-8b-8192",
         messages: [
           { role: "system", content: "You are a helpful assistant." },
           { role: "user", content: prompt }
