@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const Groq = require("groq-sdk");
 const rules = require("../data/serverRules");
 
@@ -33,6 +33,7 @@ module.exports = {
     }
     cooldown.set(userId, Date.now() + 5000);
 
+    // ❌ no API key
     if (!process.env.GROQ_API_KEY) {
       return interaction.reply({
         content: "❌ Groq API key not set.",
@@ -43,19 +44,17 @@ module.exports = {
     try {
       await interaction.deferReply();
 
-      // 🔍 SMART MATCHING
+      // 🔍 smart matching
       const lines = rules.split("\n");
       const words = question.split(" ");
 
       const matched = lines.filter(line => {
         const lower = line.toLowerCase();
-
         return words.some(word => lower.includes(word));
       });
 
       const context = matched.slice(0, 25).join("\n");
 
-      // 🧠 SMART PROMPT (BALANCED AI)
       const prompt = `
 You are a roleplay server support assistant.
 
@@ -65,19 +64,17 @@ ${context || rules.slice(0, 1500)}
 
 Instructions:
 - Answer clearly and naturally (Taglish allowed)
-- If rules are relevant → use them
-- If partially related → explain properly
-- If not found → give best helpful answer WITHOUT inventing fake rules
-- Keep it short and easy to understand
+- Keep it short and clean
+- Do NOT invent strict rules
 
-User question:
+Question:
 ${questionRaw}
 `;
 
       const completion = await groq.chat.completions.create({
         model: "openai/gpt-oss-120b",
         messages: [
-          { role: "system", content: "You are a helpful RP server assistant." },
+          { role: "system", content: "You are a helpful RP assistant." },
           { role: "user", content: prompt }
         ],
         temperature: 0.4,
@@ -87,12 +84,18 @@ ${questionRaw}
       const aiReply =
         completion.choices?.[0]?.message?.content || "No response.";
 
-      const finalReply =
-        aiReply.length > 2000
-          ? aiReply.slice(0, 1990) + "..."
-          : aiReply;
+      // 🧱 EMBED
+      const embed = new EmbedBuilder()
+        .setColor(0x5865F2) // Discord blurple
+        .setTitle("📜 Server Support")
+        .addFields(
+          { name: "❓ Question", value: questionRaw },
+          { name: "💡 Answer", value: aiReply.slice(0, 1024) }
+        )
+        .setFooter({ text: "Powered by AI Support System" })
+        .setTimestamp();
 
-      await interaction.editReply(finalReply);
+      await interaction.editReply({ embeds: [embed] });
 
     } catch (err) {
       console.error("Groq Error:", err);
