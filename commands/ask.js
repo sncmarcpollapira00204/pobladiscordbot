@@ -20,7 +20,7 @@ module.exports = {
     const userId = interaction.user.id;
     const question = interaction.options.getString("question");
 
-    // cooldown
+    // ⏳ cooldown
     if (cooldown.has(userId)) {
       const time = cooldown.get(userId);
       if (Date.now() < time) {
@@ -32,6 +32,7 @@ module.exports = {
     }
     cooldown.set(userId, Date.now() + 5000);
 
+    // ❌ no API key
     if (!process.env.GROQ_API_KEY) {
       return interaction.reply({
         content: "❌ Groq API key not set.",
@@ -39,38 +40,59 @@ module.exports = {
       });
     }
 
-    await interaction.deferReply();
-
     try {
+      // 🔥 defer ASAP (prevents Unknown interaction)
+      await interaction.deferReply();
+
       const prompt = `
-You are a STRICT support assistant.
+You are a STRICT roleplay server support assistant.
 
-Use ONLY the rules below.
+ONLY answer using the rules below.
 
+RULES:
 ${rules}
 
-If answer is not found, say: "Please contact staff."
+INSTRUCTIONS:
+- Do NOT invent anything
+- If not found → reply EXACTLY: "Please contact staff."
+- Keep answer short and clear
 
-Question:
+User question:
 ${question}
 `;
 
       const completion = await groq.chat.completions.create({
-        model: "llama3-8b-8192",
+        model: "llama-3.1-8b-instant",
         messages: [
-          { role: "system", content: "You are a helpful assistant." },
+          { role: "system", content: "You answer strictly from rules." },
           { role: "user", content: prompt }
-        ]
+        ],
+        temperature: 0.2,
+        max_tokens: 400
       });
 
-      const reply =
-        completion.choices[0]?.message?.content || "No response.";
+      const aiReply =
+        completion.choices?.[0]?.message?.content || "No response.";
 
-      await interaction.editReply(reply.slice(0, 2000));
+      const finalReply =
+        aiReply.length > 2000
+          ? aiReply.slice(0, 1990) + "..."
+          : aiReply;
+
+      await interaction.editReply(finalReply);
 
     } catch (err) {
       console.error("Groq Error:", err);
-      await interaction.editReply("❌ AI failed.");
+
+      // 🔥 safe fallback (prevents crash)
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply("❌ AI failed. Try again.");
+      } else {
+        await interaction.reply({
+          content: "❌ AI failed. Try again.",
+          flags: 64
+        });
+      }
     }
   }
 };
