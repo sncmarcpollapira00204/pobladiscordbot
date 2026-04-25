@@ -62,8 +62,9 @@ module.exports = {
     ]
     });
 
-const response = await result.response;
-const text = response.text();
+const geminiResponse = await result.response;
+const text = geminiResponse.text();
+
       const prompt = `
 You are a STRICT support assistant for a roleplay server.
 
