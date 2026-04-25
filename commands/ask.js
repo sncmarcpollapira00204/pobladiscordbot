@@ -2,10 +2,7 @@ const { SlashCommandBuilder } = require("discord.js");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const rules = require("../data/serverRules");
 
-// init Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-// simple cooldown
 const cooldown = new Map();
 
 module.exports = {
@@ -23,7 +20,7 @@ module.exports = {
     const userId = interaction.user.id;
     const question = interaction.options.getString("question");
 
-    // ⏳ cooldown (5s)
+    // ⏳ cooldown
     if (cooldown.has(userId)) {
       const time = cooldown.get(userId);
       if (Date.now() < time) {
@@ -35,7 +32,7 @@ module.exports = {
     }
     cooldown.set(userId, Date.now() + 5000);
 
-    // ❌ if no API key
+    // ❌ no API key
     if (!process.env.GEMINI_API_KEY) {
       return interaction.reply({
         content: "❌ Gemini API key not configured.",
@@ -46,25 +43,7 @@ module.exports = {
     await interaction.deferReply();
 
     try {
-    const model = genAI.getGenerativeModel({
-    model: "gemini-pro"
-    });
-
-    const result = await model.generateContent({
-    contents: [
-        {
-        parts: [
-            {
-            text: prompt
-            }
-        ]
-        }
-    ]
-    });
-
-const geminiResponse = await result.response;
-const text = geminiResponse.text();
-
+      // ✅ DEFINE PROMPT FIRST
       const prompt = `
 You are a STRICT support assistant for a roleplay server.
 
@@ -83,11 +62,31 @@ User question:
 ${question}
 `;
 
-      const response = await result.response;
-      const text = response.text();
+      // ✅ MODEL
+      const model = genAI.getGenerativeModel({
+        model: "gemini-pro"
+      });
 
-      // Discord limit safety
-      const reply = text.length > 2000 ? text.slice(0, 1990) + "..." : text;
+      // ✅ GENERATE (CORRECT FORMAT)
+      const result = await model.generateContent({
+        contents: [
+          {
+            parts: [
+              {
+                text: prompt
+              }
+            ]
+          }
+        ]
+      });
+
+      // ✅ RESPONSE (NO DUPLICATES)
+      const geminiResponse = await result.response;
+      const aiText = geminiResponse.text();
+
+      // ✅ SAFE LENGTH
+      const reply =
+        aiText.length > 2000 ? aiText.slice(0, 1990) + "..." : aiText;
 
       await interaction.editReply(reply);
 
@@ -95,7 +94,7 @@ ${question}
       console.error("Gemini Error:", error);
 
       await interaction.editReply(
-        "❌ GwenAI is not working properly!"
+        "❌ AI failed. Try again later."
       );
     }
   }
