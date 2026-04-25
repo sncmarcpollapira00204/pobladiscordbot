@@ -1,8 +1,8 @@
 const { SlashCommandBuilder } = require("discord.js");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const Groq = require("groq-sdk");
 const rules = require("../data/serverRules");
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const cooldown = new Map();
 
 module.exports = {
@@ -20,7 +20,7 @@ module.exports = {
     const userId = interaction.user.id;
     const question = interaction.options.getString("question");
 
-    // ⏳ cooldown
+    // cooldown
     if (cooldown.has(userId)) {
       const time = cooldown.get(userId);
       if (Date.now() < time) {
@@ -32,10 +32,9 @@ module.exports = {
     }
     cooldown.set(userId, Date.now() + 5000);
 
-    // ❌ no API key
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.GROQ_API_KEY) {
       return interaction.reply({
-        content: "❌ Gemini API key not configured.",
+        content: "❌ Groq API key not set.",
         flags: 64
       });
     }
@@ -43,59 +42,35 @@ module.exports = {
     await interaction.deferReply();
 
     try {
-      // ✅ DEFINE PROMPT FIRST
       const prompt = `
-You are a STRICT support assistant for a roleplay server.
+You are a STRICT support assistant.
 
-You MUST ONLY use the rules below to answer.
+Use ONLY the rules below.
 
-RULES:
 ${rules}
 
-INSTRUCTIONS:
-- Answer ONLY from the rules
-- If not found → reply EXACTLY: "Please contact staff."
-- Keep answer short and clear
-- Do NOT invent anything
+If answer is not found, say: "Please contact staff."
 
-User question:
+Question:
 ${question}
 `;
 
-      // ✅ MODEL
-      const model = genAI.getGenerativeModel({
-        model: "gemini-pro"
-      });
-
-      // ✅ GENERATE (CORRECT FORMAT)
-      const result = await model.generateContent({
-        contents: [
-          {
-            parts: [
-              {
-                text: prompt
-              }
-            ]
-          }
+      const completion = await groq.chat.completions.create({
+        model: "llama3-70b-8192",
+        messages: [
+          { role: "system", content: "You are a helpful assistant." },
+          { role: "user", content: prompt }
         ]
       });
 
-      // ✅ RESPONSE (NO DUPLICATES)
-      const geminiResponse = await result.response;
-      const aiText = geminiResponse.text();
-
-      // ✅ SAFE LENGTH
       const reply =
-        aiText.length > 2000 ? aiText.slice(0, 1990) + "..." : aiText;
+        completion.choices[0]?.message?.content || "No response.";
 
-      await interaction.editReply(reply);
+      await interaction.editReply(reply.slice(0, 2000));
 
-    } catch (error) {
-      console.error("Gemini Error:", error);
-
-      await interaction.editReply(
-        "❌ AI failed. Try again later."
-      );
+    } catch (err) {
+      console.error("Groq Error:", err);
+      await interaction.editReply("❌ AI failed.");
     }
   }
 };
