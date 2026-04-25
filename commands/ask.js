@@ -1,24 +1,29 @@
 const { SlashCommandBuilder } = require("discord.js");
-const rules = require("../data/serverRules"); // make sure tama path
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const rules = require("../data/serverRules");
 
+// init Gemini
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// simple cooldown
 const cooldown = new Map();
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("ask")
-    .setDescription("Search server rules")
+    .setDescription("Ask server rules")
     .addStringOption(option =>
       option
         .setName("question")
-        .setDescription("Enter keyword (e.g. vdm, gang, whitelist)")
+        .setDescription("Your question")
         .setRequired(true)
     ),
 
   async execute(interaction) {
     const userId = interaction.user.id;
-    const query = interaction.options.getString("question").toLowerCase();
+    const question = interaction.options.getString("question");
 
-    // ⏳ cooldown (5 seconds)
+    // ⏳ cooldown (5s)
     if (cooldown.has(userId)) {
       const time = cooldown.get(userId);
       if (Date.now() < time) {
@@ -30,42 +35,54 @@ module.exports = {
     }
     cooldown.set(userId, Date.now() + 5000);
 
-    // split rules into lines
-    const lines = rules.split("\n");
-
-    // find matches
-    const results = lines.filter(line =>
-      line.toLowerCase().includes(query)
-    );
-
-    // ❌ no results
-    if (results.length === 0) {
+    // ❌ if no API key
+    if (!process.env.GEMINI_API_KEY) {
       return interaction.reply({
-        content: "❌ Walang nakita sa rules.\n👉 Try different keyword.",
+        content: "❌ Gemini API key not configured.",
         flags: 64
       });
     }
 
-    // 🔥 chunk system (para hindi ma-2000 char limit)
-    const chunks = [];
-    let current = "";
+    await interaction.deferReply();
 
-    for (const line of results) {
-      if ((current + line).length > 1900) {
-        chunks.push(current);
-        current = "";
-      }
-      current += line + "\n";
-    }
+    try {
+      const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash"
+      });
 
-    if (current) chunks.push(current);
+      const prompt = `
+You are a STRICT support assistant for a roleplay server.
 
-    // send first reply
-    await interaction.reply(`📜 **RESULTS for:** \`${query}\`\n\n${chunks[0]}`);
+You MUST ONLY use the rules below to answer.
 
-    // send remaining chunks
-    for (let i = 1; i < chunks.length; i++) {
-      await interaction.followUp(chunks[i]);
+RULES:
+${rules}
+
+INSTRUCTIONS:
+- Answer ONLY from the rules
+- If not found → reply EXACTLY: "Please contact staff."
+- Keep answer short and clear
+- Do NOT invent anything
+
+User question:
+${question}
+`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      // Discord limit safety
+      const reply = text.length > 2000 ? text.slice(0, 1990) + "..." : text;
+
+      await interaction.editReply(reply);
+
+    } catch (error) {
+      console.error("Gemini Error:", error);
+
+      await interaction.editReply(
+        "❌ AI failed. Try again later."
+      );
     }
   }
 };
