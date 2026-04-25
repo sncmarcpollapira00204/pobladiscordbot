@@ -46,10 +46,24 @@ module.exports = {
     await interaction.deferReply();
 
     try {
-        const model = genAI.getGenerativeModel({
-        model: "models/gemini-pro"
-        });
+    const model = genAI.getGenerativeModel({
+    model: "gemini-pro"
+    });
 
+    const result = await model.generateContent({
+    contents: [
+        {
+        parts: [
+            {
+            text: prompt
+            }
+        ]
+        }
+    ]
+    });
+
+const response = await result.response;
+const text = response.text();
       const prompt = `
 You are a STRICT support assistant for a roleplay server.
 
@@ -68,7 +82,6 @@ User question:
 ${question}
 `;
 
-      const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
 
