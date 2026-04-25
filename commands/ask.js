@@ -5,6 +5,16 @@ const rules = require("../data/serverRules");
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const cooldown = new Map();
 
+// 🔧 normalize text
+const clean = (str) =>
+  str.toLowerCase().replace(/[^a-z0-9\s]/g, "");
+
+// 🔧 basic keywords (extend anytime)
+const KEYWORDS = [
+  "vdm", "rdm", "rob", "kidnap", "hostage",
+  "highground", "traphouse", "raid", "scam"
+];
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("ask")
@@ -19,7 +29,7 @@ module.exports = {
   async execute(interaction) {
     const userId = interaction.user.id;
     const questionRaw = interaction.options.getString("question");
-    const question = questionRaw.toLowerCase();
+    const question = clean(questionRaw);
 
     // ⏳ cooldown
     if (cooldown.has(userId)) {
@@ -33,7 +43,6 @@ module.exports = {
     }
     cooldown.set(userId, Date.now() + 5000);
 
-    // ❌ no API key
     if (!process.env.GROQ_API_KEY) {
       return interaction.reply({
         content: "❌ Groq API key not set.",
@@ -44,66 +53,84 @@ module.exports = {
     try {
       await interaction.deferReply();
 
-      // 🔍 smart matching
+      // 🔍 MATCHING (accurate + tolerant)
       const lines = rules.split("\n");
-      const words = question.split(" ");
+      const words = question.split(" ").filter(Boolean);
 
       const matched = lines.filter(line => {
-        const lower = line.toLowerCase();
-        return words.some(word => lower.includes(word));
+        const lower = clean(line);
+
+        return (
+          // keyword boost
+          KEYWORDS.some(k =>
+            question.includes(k) && lower.includes(k)
+          ) ||
+          // word match + plural tolerance
+          words.some(word =>
+            lower.includes(word) ||
+            lower.includes(word.replace(/s$/, ""))
+          )
+        );
       });
 
-        const context =
+      // 🔥 context (STRICT but safe fallback)
+      const context =
         matched.length > 0
-            ? matched.slice(0, 25).join("\n")
-            : rules.slice(0, 1500); // fallback
+          ? matched.slice(0, 20).join("\n")
+          : ""; // IMPORTANT: empty = forces DEPENDE
 
-        const prompt = `
-        You are a STRICT rule judge.
+      // 🧠 PERFECT ACCURACY PROMPT
+      const prompt = `
+You are a STRICT rule judge for a roleplay server.
 
-        Answer format MUST be:
+Answer format EXACTLY:
 
-        Verdict: (OO / HINDI / DEPENDE)
-        Basis: (copy exact lines from rules)
+Verdict: (OO / HINDI / DEPENDE)
+Basis:
+- (quote exact lines from rules ONLY)
 
-        RULES:
-        ${context}
+RULES:
+${context}
 
-        INSTRUCTIONS:
-        - DO NOT explain beyond rules
-        - DO NOT invent anything
-        - ONLY use given rules
-        - If no clear rule → Verdict: DEPENDE
+STRICT RULES:
+- If there is NO matching rule → Verdict: DEPENDE
+- DO NOT invent or assume rules
+- DO NOT explain beyond the quoted rules
+- ONLY use the given RULES section
+- If unclear → DEPENDE
+- NEVER return empty
 
-        Question:
-        ${question}
-        `;
+Question:
+${questionRaw}
+`;
 
       const completion = await groq.chat.completions.create({
         model: "openai/gpt-oss-120b",
         messages: [
-          { role: "system", content: "You are a helpful RP assistant." },
+          { role: "system", content: "You are a strict rule-only judge." },
           { role: "user", content: prompt }
         ],
-        temperature: 0.4,
-        max_tokens: 400
+        temperature: 0, // 🔥 removes creativity (important)
+        max_tokens: 300
       });
 
-        let aiReply = completion.choices?.[0]?.message?.content;
+      let aiReply =
+        completion.choices?.[0]?.message?.content || "";
 
-        if (!aiReply || aiReply.trim() === "") {
-        aiReply = "❌ No clear rule found. Please contact staff.";
-        }
+      // 🔥 FAILSAFE (NO BLANK EVER)
+      if (!aiReply || aiReply.trim() === "") {
+        aiReply = "Verdict: DEPENDE\nBasis:\n- No exact matching rule found.";
+      }
 
-      // 🧱 EMBED
+      // 🧱 EMBED OUTPUT
       const embed = new EmbedBuilder()
-        .setColor(0x5865F2) // Discord blurple
-        .setTitle("📜 Server Support")
+        .setColor(0x2b2d31)
+        .setTitle("📜 Server Rule Verdict")
         .addFields(
           { name: "❓ Question", value: questionRaw },
-          { name: "💡 Answer", value: aiReply.slice(0, 1024) }
+          { name: "⚖️ Result", value: aiReply.slice(0, 1024) }
         )
-        .setFooter({ text: "Powered by GwenAI Support" })
+        .setFooter({ text: "Accurate Rule System • No Guessing" })
         .setTimestamp();
 
       await interaction.editReply({ embeds: [embed] });
@@ -112,10 +139,12 @@ module.exports = {
       console.error("Groq Error:", err);
 
       if (interaction.deferred || interaction.replied) {
-        await interaction.editReply("❌ AI failed. Try again.");
+        await interaction.editReply(
+          "❌ System error. Please try again."
+        );
       } else {
         await interaction.reply({
-          content: "❌ AI failed. Try again.",
+          content: "❌ System error. Please try again.",
           flags: 64
         });
       }
