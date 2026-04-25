@@ -46,9 +46,9 @@ module.exports = {
     await interaction.deferReply();
 
     try {
-      const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash"
-      });
+        const model = genAI.getGenerativeModel({
+        model: "models/gemini-pro"
+        });
 
       const prompt = `
 You are a STRICT support assistant for a roleplay server.
@@ -81,7 +81,7 @@ ${question}
       console.error("Gemini Error:", error);
 
       await interaction.editReply(
-        "❌ AI failed. Try again later."
+        "❌ GwenAI is not working properly!"
       );
     }
   }
