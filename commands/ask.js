@@ -18,7 +18,7 @@ module.exports = {
 
   async execute(interaction) {
     const userId = interaction.user.id;
-    const question = interaction.options.getString("question");
+    const question = interaction.options.getString("question").toLowerCase();
 
     // ⏳ cooldown
     if (cooldown.has(userId)) {
@@ -41,34 +41,42 @@ module.exports = {
     }
 
     try {
-      // 🔥 defer ASAP (prevents Unknown interaction)
       await interaction.deferReply();
 
+      // 🔍 FILTER RULES (FIX SA TOKEN LIMIT)
+      const lines = rules.split("\n");
+
+      const matched = lines.filter(line =>
+        line.toLowerCase().includes(question)
+      );
+
+      const context = matched.slice(0, 20).join("\n");
+
+      // ❌ NO MATCH
+      if (!context) {
+        return interaction.editReply("❌ No matching rule found.");
+      }
+
+      // 🧠 SMALL PROMPT LANG (NO MORE 413 ERROR)
       const prompt = `
-You are a STRICT roleplay server support assistant.
+Use ONLY this information:
 
-ONLY answer using the rules below.
+${context}
 
-RULES:
-${rules}
+If answer not found, say: "Please contact staff."
 
-INSTRUCTIONS:
-- Do NOT invent anything
-- If not found → reply EXACTLY: "Please contact staff."
-- Keep answer short and clear
-
-User question:
+Question:
 ${question}
 `;
 
       const completion = await groq.chat.completions.create({
         model: "openai/gpt-oss-120b",
         messages: [
-          { role: "system", content: "You answer strictly from rules." },
+          { role: "system", content: "Answer only from given rules." },
           { role: "user", content: prompt }
         ],
         temperature: 0.2,
-        max_tokens: 400
+        max_tokens: 300
       });
 
       const aiReply =
@@ -84,7 +92,6 @@ ${question}
     } catch (err) {
       console.error("Groq Error:", err);
 
-      // 🔥 safe fallback (prevents crash)
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply("❌ AI failed. Try again.");
       } else {
