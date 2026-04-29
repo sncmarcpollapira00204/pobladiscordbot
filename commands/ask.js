@@ -81,24 +81,8 @@ module.exports = {
 
       // 🧠 PERFECT ACCURACY PROMPT
       const prompt = `
-You are a STRICT rule judge for a roleplay server.
-
-Answer format EXACTLY:
-
-Verdict: (OO / HINDI / DEPENDE)
-Basis:
-- (quote exact lines from rules ONLY)
-
-RULES:
-${context}
-
-STRICT RULES:
-- If there is NO matching rule → Verdict: DEPENDE
-- DO NOT invent or assume rules
-- DO NOT explain beyond the quoted rules
-- ONLY use the given RULES section
-- If unclear → DEPENDE
-- NEVER return empty
+      you can answer everything using your brain
+      answer everything questions
 
 Question:
 ${questionRaw}
