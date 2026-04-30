@@ -9,10 +9,10 @@ const cooldown = new Map();
 const clean = (str) =>
   str.toLowerCase().replace(/[^a-z0-9\s]/g, "");
 
-// 🔧 basic keywords (extend anytime)
+// 🔧 keywords
 const KEYWORDS = [
   "vdm", "rdm", "rob", "kidnap", "hostage",
-  "highground", "traphouse", "raid", "scam"
+  "highground", "traphouse", "raid", "scam", "safezone"
 ];
 
 module.exports = {
@@ -53,7 +53,7 @@ module.exports = {
     try {
       await interaction.deferReply();
 
-      // 🔍 MATCHING (accurate + tolerant)
+      // 🔍 MATCHING RULE CONTEXT
       const lines = rules.split("\n");
       const words = question.split(" ").filter(Boolean);
 
@@ -61,11 +61,9 @@ module.exports = {
         const lower = clean(line);
 
         return (
-          // keyword boost
           KEYWORDS.some(k =>
             question.includes(k) && lower.includes(k)
           ) ||
-          // word match + plural tolerance
           words.some(word =>
             lower.includes(word) ||
             lower.includes(word.replace(/s$/, ""))
@@ -73,70 +71,83 @@ module.exports = {
         );
       });
 
-      // 🔥 context (STRICT but safe fallback)
+      // 🔥 context (top matched rules)
       const context =
         matched.length > 0
-          ? matched.slice(0, 20).join("\n")
-          : ""; // IMPORTANT: empty = forces DEPENDE
+          ? matched.slice(0, 25).join("\n")
+          : "NO_MATCH";
 
-      // 🧠 PERFECT ACCURACY PROMPT
+      // 🧠 STRICT PROMPT (FIXED)
       const prompt = `
-      you can answer everything using your brain
-      answer everything questions
+You are a STRICT Roleplay Server Rules AI.
 
-      You are a Roleplay Server Rules AI Assistant.
+You MUST ONLY answer using the provided RULES.
+You are NOT allowed to use your own knowledge.
 
-      Your task is to answer user questions STRICTLY based on the server rules provided. You must NOT assume, invent, or use outside knowledge.
+====================
+SERVER RULES:
+${rules}
+====================
 
-      GUIDELINES:
-      - Only use the exact rules given.
-      - Always cite the specific rule (Article and Section).
-      - If no rule applies, say: "No specific rule found regarding this."
-      - If the situation is unclear, say: "Depends on scenario" and explain both sides based on rules.
-      - Do not guess or make up punishments unless stated in the rules.
-      - Keep answers clear, direct, and professional.
+RELEVANT MATCH:
+${context}
+====================
 
-      RESPONSE FORMAT:
+USER QUESTION:
+${questionRaw}
 
-      Verdict: (Allowed / Not Allowed / Depends)
+====================
 
-      Rule Basis:
-      (Quote exact rule: Article and Section)
+RULES:
+- Only use the SERVER RULES above.
+- NEVER invent rules.
+- NEVER assume.
+- If not found, say: "No specific rule found regarding this."
+- If unclear: say "Depends on scenario"
+- Always include Article and Section.
 
-      Explanation:
-      (Explain in simple terms why it is allowed or not)
+FORMAT:
 
-      Notes:
-      (Optional — add clarifications if needed)
+Verdict: (Allowed / Not Allowed / Depends)
 
-      IMPORTANT:
-      - Stay neutral at all times.
-      - Do not add opinions.
-      - Focus only on rule-based judgment.      
+Rule Basis:
+(Exact Article + Section)
 
-      Question:
-      ${questionRaw}
-      `;
+Explanation:
+(Simple explanation based ONLY on rules)
+
+Notes:
+(Optional)
+`;
 
       const completion = await groq.chat.completions.create({
         model: "openai/gpt-oss-120b",
         messages: [
-          { role: "system", content: "You are a strict rule-only judge." },
+          { role: "system", content: "You are a strict rule judge. No guessing." },
           { role: "user", content: prompt }
         ],
-        temperature: 0, // 🔥 removes creativity (important)
+        temperature: 0,
         max_tokens: 500
       });
 
       let aiReply =
         completion.choices?.[0]?.message?.content || "";
 
-      // 🔥 FAILSAFE (NO BLANK EVER)
+      // 🔥 FAILSAFE
       if (!aiReply || aiReply.trim() === "") {
-        aiReply = "Verdict: DEPENDE\nBasis:\n- No exact matching rule found.";
+        aiReply = `Verdict: Depends
+
+Rule Basis:
+No specific rule found regarding this.
+
+Explanation:
+The provided rules do not clearly cover this scenario.
+
+Notes:
+Avoid assumptions. Ask admin for clarification.`;
       }
 
-      // 🧱 EMBED OUTPUT
+      // 🧱 EMBED
       const embed = new EmbedBuilder()
         .setColor(0x2b2d31)
         .setTitle("GATEKEEPER BOT ASSISTANT")
@@ -144,7 +155,7 @@ module.exports = {
           { name: "❓ Question", value: questionRaw },
           { name: "⚖️ Result", value: aiReply.slice(0, 1024) }
         )
-        .setFooter({ text: "Accurate Rule System • No Guessing" })
+        .setFooter({ text: "KIRA-AI ON IG" })
         .setTimestamp();
 
       await interaction.editReply({ embeds: [embed] });
@@ -153,12 +164,10 @@ module.exports = {
       console.error("Groq Error:", err);
 
       if (interaction.deferred || interaction.replied) {
-        await interaction.editReply(
-          "❌ System error. Please try again."
-        );
+        await interaction.editReply("❌ System error.");
       } else {
         await interaction.reply({
-          content: "❌ System error. Please try again.",
+          content: "❌ System error.",
           flags: 64
         });
       }
