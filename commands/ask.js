@@ -79,10 +79,10 @@ module.exports = {
 
       // 🧠 STRICT PROMPT (FIXED)
       const prompt = `
-      You are a STRICT Roleplay Server Rules AI Assistant.
-
-      You MUST ONLY answer using the provided RULES.
-      You are NOT allowed to use outside knowledge.
+      - You MUST NOT define terms unless explicitly written in the rules.
+      - If the definition is not in the rules, say:
+        "The rules do not define this term."
+      If you mention anything not written in the rules, your answer is INVALID.
 
       ====================
       RULES:
@@ -106,13 +106,14 @@ module.exports = {
       Verdict: (Allowed / Not Allowed / Depends)
 
       Rule Basis:
-      (Exact Article and Section)
+      (ONLY exact copied text from rules)
 
       Explanation:
-      (Simple explanation based ONLY on rules)
+      - ONLY explain what the rule states
+      - DO NOT define terms unless written in rules
 
       Notes:
-      (Optional)
+      - If term is not defined, say it clearly
       `;
 
       const completion = await groq.chat.completions.create({
